@@ -15,7 +15,7 @@
 #                                                                             #
 ###############################################################################
 
-from typing import Dict, List
+from typing import Dict, Collection
 
 
 class Indices(object):
@@ -30,6 +30,9 @@ class Indices(object):
                    self._keys_idx == other._keys_idx
         return False
 
+    def __len__(self):
+        return len(self._keys)
+
     def get_keys(self) -> tuple:
         return tuple(self._keys)
 
@@ -41,7 +44,7 @@ class Indices(object):
         self._keys_idx[key] = new_idx
         return new_idx
 
-    def add_keys(self, keys: List[str]):
+    def add_keys(self, keys: Collection[str]):
         for key in keys:
             self.add_key(key)
 

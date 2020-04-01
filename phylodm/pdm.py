@@ -1,32 +1,42 @@
 from collections import deque
+from typing import Tuple, List
 
 import dendropy
 import h5py
+import numpy as np
 from tqdm import tqdm
 
+from phylodm.common import create_mat
 from phylodm.indices import Indices
 from phylodm.symmat import SymMat
 
 
 class PDM(SymMat):
 
-    def __init__(self, n_indices: int, d_type):
-        super().__init__(n_indices, d_type)
+    def __init__(self):
+        super().__init__()
+        self._tree_length = None
 
-        self.tree_length = None
-
-    def as_matrix(self, normalised=False):
-        mat = super().as_matrix()
+    def as_matrix(self, normalised: bool = False) -> Tuple[List[str], np.array]:
+        labels, mat = super().as_matrix()
         if normalised:
-            mat = mat * (1.0 / self.tree_length)
-        return mat
+            mat = mat * (1.0 / self._tree_length)
+        return labels, mat
 
-    def process_dendropy_tree(self, tree: dendropy.Tree, method: str = 'pd'):
+    @staticmethod
+    def get_from_dendropy(tree: dendropy.Tree, method: str = 'pd') -> 'PDM':
+        return PDM()._get_from_dendropy(tree, method)
+
+    def _get_from_dendropy(self, tree: dendropy.Tree, method: str = 'pd') -> 'PDM':
         # Validate inputs.
         if method == 'pd':
             use_pd = True
+            self._d_type = np.dtype('float64')
+            self._arr_default = 0.0
         elif method == 'node':
             use_pd = False
+            self._d_type = np.dtype('uint32')
+            self._arr_default = 0
         else:
             raise NotImplemented(f'Unknown method: {method}')
 
@@ -35,7 +45,10 @@ class PDM(SymMat):
             raise Exception('Dendropy did not seed the tree correctly.')
 
         # Store the tree length for normalising branch lengths.
-        self.tree_length = tree.length()
+        if use_pd:
+            self._tree_length = tree.length()
+        else:
+            self._tree_length = len(tree.edges())
 
         # Queue each of the leaf nodes for processing.
         queue = deque()
@@ -43,17 +56,13 @@ class PDM(SymMat):
             queue.append(leaf_node)
 
         # Create leaf indices
+        self._indices = Indices()
         for leaf in sorted(queue, key=lambda x: x.taxon.label):
-            super()._indices.add_key(leaf.taxon.label)
+            self._indices.add_key(leaf.taxon.label)
 
-        # Store lower triangle results in a vector.
-        # n_leaf = len(self.leaf_idx)
-        # d_type = np.float64 if use_pd else np.uint16
-        # # self.results = np.zeros(int(n_leaf / 2 * (n_leaf - 1)), dtype=d_type)
-        # self.results = np.zeros([n_leaf, n_leaf], dtype=d_type)
+        self._data = create_mat(len(self._indices), self._arr_default)
 
         # Track distances until the seed node, from each leaf node.
-        parent_node = None
         for leaf_node in tqdm(queue):
             cur_node = leaf_node
             cur_node.child_dist = {leaf_node: 0.0 if use_pd else 0}
@@ -70,31 +79,55 @@ class PDM(SymMat):
                 # Calculate all pairwise distances between sister nodes not processed
                 for sister_node in set(parent_node.child_dist.keys()).difference(sisters_processed):
                     sister_dist = parent_node.child_dist[sister_node]
-                    super().set_value(leaf_node.taxon.label, sister_node.taxon.label, sister_dist + tot_dist)
+
+                    if leaf_node.taxon.label == sister_node.taxon.label:
+                        calc_dist = self._arr_default
+                    else:
+                        calc_dist = sister_dist + tot_dist
+                    self.set_value(leaf_node.taxon.label, sister_node.taxon.label, calc_dist)
+
                     sisters_processed.add(sister_node)
 
                 parent_node.child_dist[leaf_node] = tot_dist
                 cur_node = parent_node
 
-    def process_tree(self, path_tree, method: str = 'pd'):
+        return self
+
+    @staticmethod
+    def get_from_newick_file(path_tree: str, method: str = 'pd') -> 'PDM':
         tree = dendropy.Tree.get_from_path(path_tree,
                                            schema='newick',
                                            rooting='force-unrooted',
                                            preserve_underscores=True)
-        self.process_dendropy_tree(tree, method)
+        return PDM.get_from_dendropy(tree, method)
 
-    def write(self, path: str):
+    def save_to_path(self, path: str):
         with h5py.File(path, 'w') as f:
             f.create_dataset('indices',
                              data=[t.encode('ascii') for t in self._indices.get_keys()],
                              dtype=h5py.string_dtype(encoding='ascii'))
-            f.create_dataset('data', data=self._data, chunks=True)
-            f.create_dataset('tree_length', data=self.tree_length)
+            f.create_dataset('data', data=self._data, chunks=True, dtype=self._d_type)
+            f.create_dataset('tree_length', data=self._tree_length, dtype=self._d_type)
+            f.create_dataset('arr_default', data=self._arr_default, dtype=self._d_type)
 
-    def read(self, path: str):
+    @staticmethod
+    def get_from_path(path: str) -> 'PDM':
+        return PDM()._get_from_path(path)
+
+    def _get_from_path(self, path: str) -> 'PDM':
+        # TODO: STore the method and compare it
         self._indices = Indices()
         with h5py.File(path, 'r') as hf:
+            self._arr_default = hf['arr_default'][()]
             self._data = hf['data'][()]
-            self.tree_length = hf['tree_length'][()]
+            self._tree_length = hf['tree_length'][()]
             for idx, key in enumerate(hf['indices'][()]):
                 self._indices.add_key(key.decode('utf-8'))
+        self._d_type = self._data.dtype
+        return self
+
+    def get_value(self, key_i: str, key_j: str, normalised: bool = False):
+        value = self.get_value(key_i, key_j)
+        if normalised:
+            value *= 1 / self._tree_length
+        return value
