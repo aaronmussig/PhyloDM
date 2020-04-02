@@ -6,10 +6,10 @@ python:
 before_install:
   - python --version
   - pip install -U pip
-  - pip install codecov
+  - pip install coverage codecov
 install:
   -  pip install .
 script:
-  - python -m unittest discover
+  - coverage run -m unittest discover -s tests/
 after_success:
   - codecov
