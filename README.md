@@ -1,4 +1,7 @@
 # PhyloDm
+
+[![codecov.io](https://codecov.io/github/aaronmussig/PhyloDM/coverage.svg?branch=master)](https://codecov.io/github/aaronmussig/PhyloDM?branch=master)
+
 Efficient calculation of pairwise phylogenetic distance matrices.
 
 ## Installation
