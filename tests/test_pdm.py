@@ -25,7 +25,7 @@ from dendropy.simulate import treesim
 
 from phylodm.pdm import PDM
 
-N_TESTS = 500
+N_TESTS = 100
 
 
 def get_test_tree(n: int) -> dict:

@@ -24,7 +24,7 @@ import numpy as np
 
 from phylodm.symmat import SymMat
 
-N_TESTS = 500
+N_TESTS = 100
 
 
 def generate_test_matrix(n):

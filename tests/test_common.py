@@ -19,7 +19,7 @@ import unittest
 
 from phylodm.common import *
 
-N_TESTS = 500
+N_TESTS = 100
 
 
 class TestCommon(unittest.TestCase):
