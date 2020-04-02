@@ -15,44 +15,56 @@
 #                                                                             #
 ###############################################################################
 
-from typing import Dict, Collection
+from typing import Dict, Collection, Tuple, List
+
+from phylodm.exceptions import DuplicateIndex
 
 
 class Indices(object):
+    """Stores a unique list of strings, preserving their order and providing
+    constant time lookup for the order in which they were added."""
 
     def __init__(self):
-        self._keys = list()
-        self._keys_idx = dict()
+        """Instance variables are populated via the add key(s) method."""
+        self._keys: List[str] = list()
+        self._keys_idx: Dict[str, int] = dict()
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
+        """Equal if the indices and the positions are the same."""
         if isinstance(other, Indices):
             return self._keys == other._keys and \
                    self._keys_idx == other._keys_idx
         return False
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """The number of indices stored."""
         return len(self._keys)
 
-    def get_keys(self) -> tuple:
-        return tuple(self._keys)
+    def __contains__(self, key: str) -> bool:
+        """Returns True if a key is in the list of indices."""
+        return key in self._keys_idx
 
-    def add_key(self, key: str) -> int:
+    def add_key(self, key: str):
+        """Add a key, a DuplicateIndex is raised if the key is not unique."""
         if key in self._keys_idx:
-            raise ValueError(f'Cannot add duplicate key: {key}')
+            raise DuplicateIndex(f'Cannot add duplicate key: {key}')
         new_idx = len(self._keys)
         self._keys.append(key)
         self._keys_idx[key] = new_idx
-        return new_idx
 
     def add_keys(self, keys: Collection[str]):
+        """Adds a collection of keys to the indices."""
         for key in keys:
             self.add_key(key)
 
-    def get_key_indices(self) -> Dict[str, int]:
-        return self._keys_idx
+    def get_keys(self) -> Tuple[str]:
+        """Return a tuple of the indices stored."""
+        return tuple(self._keys)
 
     def get_key_idx(self, key: str) -> int:
+        """Returns the index of the specified key."""
         return self._keys_idx[key]
 
-    def contains(self, key: str) -> bool:
-        return key in self._keys_idx
+    def get_key_indices(self) -> Dict[str, int]:
+        """Returns a dictionary of all keys and their indices."""
+        return self._keys_idx

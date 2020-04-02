@@ -1,3 +1,20 @@
+###############################################################################
+#                                                                             #
+#    This program is free software: you can redistribute it and/or modify     #
+#    it under the terms of the GNU General Public License as published by     #
+#    the Free Software Foundation, either version 3 of the License, or        #
+#    (at your option) any later version.                                      #
+#                                                                             #
+#    This program is distributed in the hope that it will be useful,          #
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of           #
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            #
+#    GNU General Public License for more details.                             #
+#                                                                             #
+#    You should have received a copy of the GNU General Public License        #
+#    along with this program. If not, see <http://www.gnu.org/licenses/>.     #
+#                                                                             #
+###############################################################################
+
 import os
 import shutil
 import tempfile
@@ -7,6 +24,8 @@ import numpy as np
 from dendropy.simulate import treesim
 
 from phylodm.pdm import PDM
+
+N_TESTS = 500
 
 
 def get_test_tree(n: int) -> dict:
@@ -40,7 +59,7 @@ class TestPDM(unittest.TestCase):
 
     def setUp(self):
         self.dir_tmp = tempfile.mkdtemp(prefix='phylodm_test_')
-        self.true_data = get_test_tree(500)
+        self.true_data = get_test_tree(N_TESTS)
 
         # Write the file for testing the newick get method.
         self.path_newick = os.path.join(self.dir_tmp, 'newick.tree')
@@ -65,9 +84,10 @@ class TestPDM(unittest.TestCase):
 
                 labels, mat = pdm.as_matrix(normalised=normalised)
                 self.assertAlmostEqual(self.true_data['tree'].length(), pdm._tree_length, 10)
-                self.assertEqual(pdm._d_type, np.dtype('float64'))
+                self.assertTrue(np.issubdtype(pdm._d_type, np.float))
                 self.assertEqual(pdm._arr_default, 0.0)
                 self.assertSetEqual(set(labels), set(self.true_data['taxa']))
+                self.assertEqual('pd', pdm._method)
 
                 if normalised:
                     self.assertTrue(np.all(np.abs(mat - self.true_data['pd_mat_norm']) < 1e-8))
@@ -84,11 +104,38 @@ class TestPDM(unittest.TestCase):
 
                 labels, mat = pdm.as_matrix(normalised=normalised)
                 self.assertEqual(len(self.true_data['tree'].edges()), pdm._tree_length)
-                self.assertEqual(pdm._d_type, np.dtype('uint32'))
+                self.assertTrue(np.issubdtype(pdm._d_type, np.integer))
                 self.assertEqual(pdm._arr_default, 0)
                 self.assertSetEqual(set(labels), set(self.true_data['taxa']))
+                self.assertEqual('node', pdm._method)
 
                 if normalised:
                     self.assertTrue(np.all(np.abs(mat - self.true_data['nd_mat_norm']) < 1e-8))
                 else:
                     self.assertTrue(np.all(np.abs(mat - self.true_data['nd_mat']) < 1e-8))
+
+    def test_get_value_pd(self):
+        pdm = PDM.get_from_dendropy(self.true_data['tree'], method='pd')
+        for normalised in (False, True):
+            for i, key_i in enumerate(self.true_data['taxa']):
+                for j, key_j in enumerate(self.true_data['taxa']):
+                    test = pdm.get_value(key_i, key_j, normalised=normalised)
+                    if normalised:
+                        data_set = 'pd_mat_norm'
+                    else:
+                        data_set = 'pd_mat'
+                    true = self.true_data[data_set][i][j]
+                    self.assertAlmostEqual(true, test, 10)
+
+    def test_get_value_node(self):
+        pdm = PDM.get_from_dendropy(self.true_data['tree'], method='node')
+        for normalised in (False, True):
+            for i, key_i in enumerate(self.true_data['taxa']):
+                for j, key_j in enumerate(self.true_data['taxa']):
+                    test = pdm.get_value(key_i, key_j, normalised=normalised)
+                    if normalised:
+                        data_set = 'nd_mat_norm'
+                    else:
+                        data_set = 'nd_mat'
+                    true = self.true_data[data_set][i][j]
+                    self.assertAlmostEqual(true, test, 10)
