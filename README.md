@@ -1,11 +1,13 @@
-# PhyloDm
+# PhyloDM
 [![PyPI](https://img.shields.io/pypi/v/phylodm)](https://pypi.org/project/phylodm/)
+![Conda (channel only)](https://img.shields.io/conda/vn/bioconda/phylodm?color=green)
 [![codecov.io](https://codecov.io/github/aaronmussig/PhyloDM/coverage.svg?branch=master)](https://codecov.io/github/aaronmussig/PhyloDM?branch=master)
 
 Efficient calculation of pairwise phylogenetic distance matrices.
 
 ## Installation
 * PyPI: `pip install phylodm`
+* conda: `conda install -c bioconda phylodm`
 
 ## Usage
 The leaf nodes in the tree must have unique names, otherwise a `DuplicateIndex` exception is raised.
