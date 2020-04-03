@@ -30,7 +30,9 @@ def print_help():
 
 
 def main(args=None):
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='Compute a phylogenetic '
+                                                 'distance matrix for a given '
+                                                 'newick tree.')
     parser.add_argument('newick', type=str, help='path to the newick file')
     parser.add_argument('method', type=str, help='use patristic distance {pd} or node distance {node}')
     parser.add_argument('output', type=str, help='path to output matrix')
