@@ -68,6 +68,9 @@ class PDM(SymMat):
         else:
             raise NotImplemented(f'Unknown method: {method}')
 
+        # Deep copy tree
+        tree = dendropy.Tree.get_from_string(tree.as_string(schema='newick'), 'newick')
+
         # Check that the end condition can be satisfied.
         if tree.seed_node.parent_node is not None:
             raise Exception('Dendropy did not seed the tree correctly.')

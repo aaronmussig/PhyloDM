@@ -3,7 +3,13 @@ python:
   - "3.6"
   - "3.7"
   - "3.8"
+before_install:
+  - python --version
+  - pip install -U pip
+  - pip install coverage codecov
 install:
   -  pip install .
 script:
-  - python -m unittest discover
+  - coverage run -m unittest discover -s tests/
+after_success:
+  - codecov
