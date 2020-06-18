@@ -10,9 +10,9 @@ python:
 before_install:
   - python --version
   - pip install -U pip
-  - pip install coverage codecov cython
+  - pip install coverage codecov cython distutils
 install:
-  -  pip install -vv --no-build-isolation  .
+  - python setup.py built_ext -vv --inplace .
 script:
   - coverage run -m unittest discover -s tests/
 after_success:
