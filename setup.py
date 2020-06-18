@@ -20,13 +20,13 @@ def readme():
         return f.read()
 
 
-compile_extra_args = list()
+compile_extra_args = ['-O3']
 link_extra_args = list()
 # if platform.system() == "Windows":
 #     compile_extra_args = ["/std:c++latest", "/EHsc"]
 if platform.system() == "Darwin":
-    compile_extra_args = ['-O3', '-std=c++11', "-mmacosx-version-min=10.9"]
-    link_extra_args = ["-stdlib=libc++", "-mmacosx-version-min=10.9"]
+    compile_extra_args.extend(['-std=c++11', "-mmacosx-version-min=10.9"])
+    link_extra_args.extend(["-stdlib=libc++", "-mmacosx-version-min=10.9"])
 
 ext_modules = [Extension('phylodm.pdm_c', ['phylodm/pdm_c.pyx'],
                          language='c++',
