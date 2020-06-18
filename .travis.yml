@@ -12,9 +12,7 @@ before_install:
   - pip install -U pip setuptools
   - pip install coverage codecov cython
 install:
-#  - pip install -vv --no-build-isolation  .
-  - python setup.py sdist
-  - pip install -vv dist/phylodm-1.1.0.tar.gz
+  - pip install -vv --no-build-isolation -e .
 script:
   - coverage run -m unittest discover -s tests/
 after_success:
