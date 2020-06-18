@@ -1,12 +1,12 @@
 language: python
 os:
   - linux
-#  - osx
-#  - windows
+  - osx
+  - windows
 python:
   - "3.6"
-#  - "3.7"
-#  - "3.8"
+  - "3.7"
+  - "3.8"
 before_install:
   - python --version
   - pip install -U pip setuptools
