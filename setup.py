@@ -60,6 +60,7 @@ setup(name='phylodm',
       ],
       keywords='phylogenetic distance matrix symmetric',
       packages=['phylodm'],
+      package_data={'phylodm': ['pdm_c.pyx']},
       entry_points={
           'console_scripts': [
               'phylodm = phylodm.__main__:main'
