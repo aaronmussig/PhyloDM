@@ -1,12 +1,10 @@
 import os
 import platform
 import re
-from distutils.core import setup
-from distutils.extension import Extension
 
 import numpy
 from Cython.Build import cythonize
-from Cython.Distutils import build_ext
+from setuptools import setup, Extension
 
 
 def read_version():
@@ -73,7 +71,4 @@ setup(name='phylodm',
       data_files=[("", ["LICENSE"])],
       ext_modules=cythonize(ext_modules,
                             compiler_directives={'language_level': 3})
-      # ,
-      # cmdclass={"build_ext": build_ext}  # ,
-      # options={'build_ext': {'inplace': True, 'force': True}}
       )

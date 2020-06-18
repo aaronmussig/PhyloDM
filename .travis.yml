@@ -10,9 +10,10 @@ python:
 before_install:
   - python --version
   - pip install -U pip
-  - pip install coverage codecov cython distutils
+  - pip install coverage codecov cython
 install:
-  - python setup.py built_ext -vv --inplace .
+#  - pip install -vv --no-build-isolation  .
+  - pip install -vv dist/phylodm-*.tar.gz
 script:
   - coverage run -m unittest discover -s tests/
 after_success:
