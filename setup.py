@@ -2,10 +2,8 @@ import os
 import platform
 import re
 
-import numpy
-from Cython.Build import cythonize
 from setuptools import setup, Extension
-
+from distutils.command import build as build_orig
 
 def read_version():
     path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'phylodm/__init__.py')
@@ -16,6 +14,19 @@ def read_version():
 def readme():
     with open('README.md') as f:
         return f.read()
+
+
+class build(build_orig):
+
+    def finalize_options(self):
+        super().finalize_options()
+        __builtins__.__NUMPY_SETUP__ = False
+        import numpy
+        for extension in self.distribution.ext_modules:
+            extension.include_dirs.append(numpy.get_include())
+        from Cython.Build import cythonize
+        self.distribution.ext_modules = cythonize(self.distribution.ext_modules,
+                                                  language_level=3)
 
 
 compile_extra_args = ['-O3']
@@ -29,8 +40,7 @@ if platform.system() == "Darwin":
 ext_modules = [Extension('phylodm.pdm_c', ['phylodm/pdm_c.pyx'],
                          language='c++',
                          extra_compile_args=compile_extra_args,
-                         extra_link_args=link_extra_args,
-                         include_dirs=[numpy.get_include()]
+                         extra_link_args=link_extra_args
                          )]
 
 setup(name='phylodm',
@@ -67,9 +77,9 @@ setup(name='phylodm',
           ]
       },
       install_requires=['numpy', 'dendropy', 'h5py', 'tqdm'],
-      setup_requires=['cython'],
+      setup_requires=['cython', 'numpy'],
       python_requires='>=3.6',
       data_files=[("", ["LICENSE"])],
-      ext_modules=cythonize(ext_modules,
-                            compiler_directives={'language_level': 3})
+      ext_modules=ext_modules,
+      cmdclass={'build': build}
       )
