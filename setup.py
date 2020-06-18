@@ -3,7 +3,7 @@ import platform
 import re
 
 from setuptools import setup, Extension
-from distutils.command import build as build_orig
+from distutils.command.build import build as build_orig
 
 def read_version():
     path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'phylodm/__init__.py')
