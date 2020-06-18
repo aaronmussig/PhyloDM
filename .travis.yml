@@ -1,4 +1,8 @@
 language: python
+os:
+  - linux
+  - osx
+  - windows
 python:
   - "3.6"
   - "3.7"
@@ -6,7 +10,7 @@ python:
 before_install:
   - python --version
   - pip install -U pip
-  - pip install coverage codecov
+  - pip install coverage codecov cython
 install:
   -  pip install .
 script:
