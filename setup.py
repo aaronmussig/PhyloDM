@@ -1,11 +1,17 @@
-from setuptools import setup
 import os
+import platform
 import re
+from distutils.core import setup
+from distutils.extension import Extension
+
+import numpy
+from Cython.Build import cythonize
+from Cython.Distutils import build_ext
 
 
 def read_version():
     path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'phylodm/__init__.py')
-    with open(path, 'r') as fh:
+    with open(path) as fh:
         return re.search(r'__version__\s?=\s?[\'"](.+)[\'"]', fh.read()).group(1)
 
 
@@ -13,6 +19,21 @@ def readme():
     with open('README.md') as f:
         return f.read()
 
+
+compile_extra_args = list()
+link_extra_args = list()
+# if platform.system() == "Windows":
+#     compile_extra_args = ["/std:c++latest", "/EHsc"]
+if platform.system() == "Darwin":
+    compile_extra_args = ['-O3', '-std=c++11', "-mmacosx-version-min=10.9"]
+    link_extra_args = ["-stdlib=libc++", "-mmacosx-version-min=10.9"]
+
+ext_modules = [Extension('phylodm.pdm_c', ['phylodm/pdm_c.pyx'],
+                         language='c++',
+                         extra_compile_args=compile_extra_args,
+                         extra_link_args=link_extra_args,
+                         include_dirs=[numpy.get_include()]
+                         )]
 
 setup(name='phylodm',
       version=read_version(),
@@ -47,6 +68,12 @@ setup(name='phylodm',
           ]
       },
       install_requires=['numpy', 'dendropy', 'h5py', 'tqdm'],
+      setup_requires=['cython'],
       python_requires='>=3.6',
-      data_files=[("", ["LICENSE"])]
+      data_files=[("", ["LICENSE"])],
+      ext_modules=cythonize(ext_modules,
+                            compiler_directives={'language_level': 3})
+      # ,
+      # cmdclass={"build_ext": build_ext}  # ,
+      # options={'build_ext': {'inplace': True, 'force': True}}
       )

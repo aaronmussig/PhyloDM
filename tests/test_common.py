@@ -15,9 +15,13 @@
 #                                                                             #
 ###############################################################################
 
+import itertools
 import unittest
 
-from phylodm.common import *
+import numpy as np
+
+from phylodm.common import create_mat_vector, compact_int_mat
+from phylodm.pdm_c import row_idx_from_mat_coords, n_cartesian
 
 N_TESTS = 100
 
@@ -39,12 +43,6 @@ class TestCommon(unittest.TestCase):
             test_idx_b = row_idx_from_mat_coords(N_TESTS, j, i)
             self.assertTrue(true_idx == test_idx_a == test_idx_b)
 
-    def test_mat_shape_from_row_shape(self):
-        for n in range(N_TESTS):
-            row_len = len(np.triu_indices(n)[0])
-            test = mat_shape_from_row_shape(row_len)
-            self.assertTrue(n == test)
-
     def test_compact_int_mat(self):
         cases = (('int8', -128),
                  ('int16', -32768),
@@ -58,3 +56,26 @@ class TestCommon(unittest.TestCase):
             true_arr = np.array([[1, 2], [3, num]], dtype=np.dtype('int64'))
             comp_arr = compact_int_mat(true_arr)
             self.assertEqual(case, comp_arr.dtype.name)
+
+    def test_n_cartesian(self):
+        for n_groups in range(1, N_TESTS):
+            true_list = list()
+            test_list = [0]
+
+            # Generate a random number members for each group.
+            count = 0
+            for cur_group in range(n_groups):
+                n_members = np.random.randint(1, 10)
+                true_list.append(np.random.randint(1, 100, n_members))
+                count += n_members
+                test_list.append(count)
+
+            test = n_cartesian(np.array(test_list, dtype=np.uint32))
+            if n_groups == 1:
+                true = len(true_list[0])
+            else:
+                true = 0
+                for cur_item, next_item in itertools.combinations(true_list, 2):
+                    true += np.transpose([np.tile(cur_item, len(next_item)),
+                                          np.repeat(next_item, len(cur_item))]).shape[0]
+            self.assertEqual(true, test)

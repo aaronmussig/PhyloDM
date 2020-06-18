@@ -67,14 +67,16 @@ class TestIndices(unittest.TestCase):
         self.assertTupleEqual(tuple(['foo', 'bar']), self.indices.get_keys())
 
     def test_add_key(self):
-        self.indices.add_key('foo')
-        self.indices.add_key('bar')
+        idx_foo = self.indices.add_key('foo')
+        idx_bar = self.indices.add_key('bar')
+        self.assertTupleEqual(tuple([idx_foo, idx_bar]), tuple([0, 1]))
         self.assertTupleEqual(tuple(['foo', 'bar']), self.indices.get_keys())
         self.assertDictEqual({'foo': 0, 'bar': 1}, self.indices.get_key_indices())
         self.assertRaises(DuplicateIndex, self.indices.add_key, 'foo')
 
     def test_add_keys(self):
-        self.indices.add_keys(['foo', 'bar'])
+        idx = self.indices.add_keys(['foo', 'bar'])
+        self.assertTupleEqual(tuple(idx), tuple([0, 1]))
         self.assertTupleEqual(tuple(['foo', 'bar']), self.indices.get_keys())
         self.assertDictEqual({'foo': 0, 'bar': 1}, self.indices.get_key_indices())
 

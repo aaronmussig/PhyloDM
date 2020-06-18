@@ -20,16 +20,45 @@ import shutil
 import tempfile
 import unittest
 
+import dendropy
 import numpy as np
 from dendropy.simulate import treesim
 
 from phylodm.pdm import PDM
 
-N_TESTS = 100
+N_TESTS = 103
+
+
+def add_trifurication(tree):
+    parent_node = list(tree.leaf_node_iter())[0].parent_node
+
+    t1 = dendropy.Taxon(f'T{N_TESTS + 1}')
+    t2 = dendropy.Taxon(f'T{N_TESTS + 2}')
+    t3 = dendropy.Taxon(f'T{N_TESTS + 3}')
+
+    tree.taxon_namespace.add_taxon(t1)
+    tree.taxon_namespace.add_taxon(t2)
+    tree.taxon_namespace.add_taxon(t3)
+
+    child_a = dendropy.Node(edge_length=1.234)
+    child_b = dendropy.Node(edge_length=1.234)
+    child_c = dendropy.Node(edge_length=4.123)
+
+    child_a.taxon = t1
+    child_b.taxon = t2
+    child_c.taxon = t3
+
+    parent_node.add_child(child_a)
+    parent_node.add_child(child_b)
+    parent_node.add_child(child_c)
 
 
 def get_test_tree(n: int) -> dict:
-    tree = treesim.birth_death_tree(birth_rate=1.0, death_rate=0.5, ntax=n)
+    tree = treesim.birth_death_tree(birth_rate=1.0, death_rate=0.5, ntax=n - 3)
+
+    # Add a trifurication to a random leaf node parent.
+    add_trifurication(tree)
+
     pdm = tree.phylogenetic_distance_matrix()
     taxa = sorted(pdm.taxon_iter())
     pd_mat = np.zeros((n, n))

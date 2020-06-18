@@ -44,7 +44,7 @@ class TestSymMat(unittest.TestCase):
 
         # Create a test matrix and populate it with expected data.
         self.expected = generate_test_matrix(self.n)
-        self.mat = SymMat.get_from_shape(self.n, np.dtype('int32'), -1)
+        self.mat = SymMat.get_from_indices(list(map(str, range(self.n))), np.dtype('int32'), -1)
         for i in range(self.n):
             for j in range(i + 1):
                 self.mat.set_value(str(i), str(j), self.expected[i][j])

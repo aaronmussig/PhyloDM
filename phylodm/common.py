@@ -25,19 +25,6 @@ def create_mat_vector(n: int, default: Union[int, float]) -> np.array:
     return np.full(n * (n + 1) // 2, default)
 
 
-def row_idx_from_mat_coords(n: int, i: int, j: int) -> int:
-    """Vector index corresponding to the matrix upper triangle coordinates."""
-    if i <= j:
-        return int(i * n - (i - 1) * i / 2 + j - i)
-    else:
-        return int(j * n - (j - 1) * j / 2 + i - j)
-
-
-def mat_shape_from_row_shape(n: int) -> int:
-    """Return the number of rows/columns of a matrix given the vector shape."""
-    return int(0.5 * (np.sqrt(8 * n + 1) - 1))
-
-
 def compact_int_mat(mat: np.array) -> np.array:
     """For a matrix of integers, return a copy with the smallest data type."""
     signed = (('int8', -128, 127),

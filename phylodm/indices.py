@@ -51,11 +51,14 @@ class Indices(object):
         new_idx = len(self._keys)
         self._keys.append(key)
         self._keys_idx[key] = new_idx
+        return new_idx
 
-    def add_keys(self, keys: Collection[str]):
+    def add_keys(self, keys: Collection[str]) -> List[int]:
         """Adds a collection of keys to the indices."""
+        indexes = list()
         for key in keys:
-            self.add_key(key)
+            indexes.append(self.add_key(key))
+        return indexes
 
     def get_keys(self) -> Tuple[str]:
         """Return a tuple of the indices stored."""
