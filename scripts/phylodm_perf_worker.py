@@ -1,20 +1,18 @@
 import argparse
-import random
 import sys
 
-from dendropy.simulate import treesim
+import dendropy
 
 from phylodm.pdm import PDM
 
 
 def main(args=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument('n_tax', type=int, help='number of taxon to simulate')
+    parser.add_argument('path_tree', type=str, help='path to the tree file')
     parser.add_argument('method', type=str, help='phylodm or dendropy')
     args = parser.parse_args(args)
 
-    tree = treesim.birth_death_tree(birth_rate=1.0, death_rate=0.5,
-                                    ntax=args.n_tax, rng=random.Random(42))
+    tree = dendropy.Tree.get_from_path(args.path_tree, schema='newick')
 
     if args.method == 'phylodm':
         PDM.get_from_dendropy(tree, method='pd')

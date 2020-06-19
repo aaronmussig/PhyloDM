@@ -24,7 +24,7 @@ from phylodm.pipeline import newick_to_pdm
 
 
 def print_help():
-    lines = [f'phylodm {__version__}',
+    lines = [f'phylodm v{__version__}',
              'usage: [path to newick] [pd/node] [path to output]']
     print('\n'.join(lines))
 
