@@ -9,6 +9,8 @@ Efficient calculation of pairwise phylogenetic distance matrices.
 * PyPI: `pip install phylodm`
 * conda: `conda install -c bioconda phylodm`
 
+_Note: You must have a C++ compiler._
+
 ## Usage
 The leaf nodes in the tree must have unique names, otherwise a `DuplicateIndex` exception is raised.
 
@@ -94,12 +96,23 @@ The CLI can be used to create a phylogenetic distance matrix given a newick tree
 `python -m phylodm /path/to/newick.tree pd /path/to/matrix.mat`
 
 ## Performance
-Tests were executed using the `scripts/perf_test/collect_data.py` script on dual AMD EPYC 7402 
-CPUs with 10 trials.
+Tests were executed using the `scripts/phylodm_perf.py` script with 10 trials.
 
 These tests demonstrate that PhyloDM is more efficient than DendroPy's
 phylogenetic distance matrix when there are over 500 taxa in the tree. If there
 are less than 500 taxa, then use DendroPy for all of the great 
 features it provides. 
 
+With 10,000 taxa in the tree, each program uses approximately:
+* PhyloDM = 4 seconds / 2 GB memory
+* DendroPy = 17 minutes / 90 GB memory
+
 ![DendroPy vs. PhyloDM PDM Construction Time](docs/img/dendropy_vs_phylodm_time.png)![DendroPy vs. PhyloDM PDM Maximum Memory Usage](docs/img/denropy_vs_phylodm_memory.png)
+
+## Changelog
+```
+1.1.0
+  - Significant improvement in PDM construction time using C.
+1.0.0
+  - Initial release.
+```

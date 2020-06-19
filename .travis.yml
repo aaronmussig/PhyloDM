@@ -1,14 +1,16 @@
 language: python
+os:
+  - linux
 python:
   - "3.6"
   - "3.7"
   - "3.8"
 before_install:
   - python --version
-  - pip install -U pip
-  - pip install coverage codecov
+  - pip install -U pip setuptools
+  - pip install coverage codecov cython
 install:
-  -  pip install .
+  - pip install -vv --no-build-isolation -e .
 script:
   - coverage run -m unittest discover -s tests/
 after_success:

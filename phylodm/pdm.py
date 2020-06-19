@@ -15,7 +15,7 @@
 #                                                                             #
 ###############################################################################
 
-from collections import deque
+from collections import deque, defaultdict
 from typing import Tuple, Union
 
 import dendropy
@@ -25,6 +25,7 @@ from tqdm import tqdm
 
 from phylodm.common import create_mat_vector, compact_int_mat
 from phylodm.indices import Indices
+from phylodm.pdm_c import cartesian_sum
 from phylodm.symmat import SymMat
 
 
@@ -55,72 +56,94 @@ class PDM(SymMat):
         """Load a PDM from a cache."""
         return PDM()._get_from_path(path)
 
+    @staticmethod
+    def _get_int_node_depth(tree):
+        out = defaultdict(set)
+        queue = deque([(0, tree.seed_node)])
+        while len(queue) > 0:
+            depth, node = queue.pop()
+            out[depth].add(node)
+            for child_node in node.child_node_iter():
+                if not child_node.is_leaf():
+                    queue.append((depth + 1, child_node))
+        return out
+
+    @staticmethod
+    def _preprocess_tree(tree: dendropy.Tree) -> dendropy.Tree:
+        """Deep copy and pre-process a DendroPy tree."""
+        out = dendropy.Tree.get_from_string(tree.as_string(schema='newick'), 'newick')
+        if tree.seed_node.parent_node is not None:
+            raise Exception('DendroPy did not seed the tree correctly.')
+        return out
+
     def _get_from_dendropy(self, tree: dendropy.Tree, method: str = 'pd') -> 'PDM':
+
+        # Initialise the tree
+        tree = PDM._preprocess_tree(tree)
+
+        # Initialise the class based on arguments.
         self._method = method
         if method == 'pd':
             use_pd = True
             self._d_type = np.dtype('float64')
             self._arr_default = 0.0
+            self._tree_length = tree.length()
         elif method == 'node':
             use_pd = False
             self._d_type = np.dtype('uint32')
             self._arr_default = 0
+            self._tree_length = len(tree.edges())
         else:
             raise NotImplemented(f'Unknown method: {method}')
 
-        # Deep copy tree
-        tree = dendropy.Tree.get_from_string(tree.as_string(schema='newick'), 'newick')
+        # Get each node at a specific depth.
+        depth_to_node = PDM._get_int_node_depth(tree)
 
-        # Check that the end condition can be satisfied.
-        if tree.seed_node.parent_node is not None:
-            raise Exception('Dendropy did not seed the tree correctly.')
-
-        # Store the tree length for normalising branch lengths.
-        if use_pd:
-            self._tree_length = tree.length()
-        else:
-            self._tree_length = len(tree.edges())
-
-        # Queue each of the leaf nodes for processing.
-        queue = deque()
-        for leaf_node in tree.leaf_node_iter():
-            queue.append(leaf_node)
-
-        # Create leaf indices
+        # Pre-process each leaf node and create the indices.
         self._indices = Indices()
-        for leaf in sorted(queue, key=lambda x: x.taxon.label):
-            self._indices.add_key(leaf.taxon.label)
+        for leaf_node in sorted(tree.leaf_node_iter(), key=lambda x: x.taxon.label):
+            leaf_idx = self._indices.add_key(leaf_node.taxon.label)
+            leaf_node.attr_child_dist = [(leaf_idx, leaf_node.edge_length if use_pd else 1)]
 
-        self._data = create_mat_vector(len(self._indices), self._arr_default)
+        # Create the vector to store the results.
+        self._data = create_mat_vector(len(self._indices), 0.0)
 
-        # Track distances until the seed node, from each leaf node.
-        for leaf_node in tqdm(queue):
-            cur_node = leaf_node
-            cur_node.child_dist = {leaf_node: 0.0 if use_pd else 0}
-            sisters_processed = set()
+        # Process the deepest nodes first, merging data at each level.
+        with tqdm(total=len(self._data), unit_scale=True) as p_bar:
+            n_indices = len(self._indices)
+            for cur_depth, cur_nodes in sorted(depth_to_node.items(), key=lambda x: -x[0]):
+                for node in cur_nodes:
 
-            while cur_node.parent_node is not None:
-                parent_node = cur_node.parent_node
-                tot_dist = cur_node.child_dist[leaf_node] + (cur_node.edge_length if use_pd else 1)
+                    # Extract the groups
+                    groupings = [0]
+                    group_idxs = list()
+                    group_vals = list()
+                    child_dist, child_groups = list(), list()
+                    offset = 0
 
-                # First visit, just add the cumulative distance.
-                if not hasattr(parent_node, 'child_dist'):
-                    parent_node.child_dist = {}
+                    child_groups = list()
 
-                # Calculate all pairwise distances between sister nodes not processed
-                for sister_node in set(parent_node.child_dist.keys()).difference(sisters_processed):
-                    sister_dist = parent_node.child_dist[sister_node]
+                    for child_node in node.child_node_iter():
+                        child_groups.append(child_node.attr_child_dist)
+                        for desc_idx, desc_dist in child_node.attr_child_dist:
+                            group_idxs.append(desc_idx)
+                            group_vals.append(desc_dist)
+                            offset += 1
+                        groupings.append(offset)
+                        child_dist.extend(child_node.attr_child_dist)
+                        del child_node.attr_child_dist
 
-                    if leaf_node.taxon.label == sister_node.taxon.label:
-                        calc_dist = self._arr_default
-                    else:
-                        calc_dist = sister_dist + tot_dist
-                    self.set_value(leaf_node.taxon.label, sister_node.taxon.label, calc_dist)
+                    groupings = np.array(groupings, dtype=np.uint32)
+                    group_idxs = np.array(group_idxs, dtype=np.uint32)
+                    group_vals = np.array(group_vals, dtype=np.float64)
 
-                    sisters_processed.add(sister_node)
+                    n_iter = cartesian_sum(n_indices, groupings, group_idxs, group_vals, self._data)
+                    p_bar.update(n_iter)
 
-                parent_node.child_dist[leaf_node] = tot_dist
-                cur_node = parent_node
+                    # Record the distance from this node to its leaf nodes, and bring up.
+                    # Add th distance from thsi node to its children
+                    if cur_depth > 0:
+                        node.attr_child_dist = [(x, y + (node.edge_length if use_pd else 1)) for x, y in child_dist]
 
         # Use the smallest possible data type for the matrix
         if method == 'node':

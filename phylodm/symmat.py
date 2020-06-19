@@ -20,8 +20,9 @@ from typing import Collection, Tuple, Optional, Union
 import h5py
 import numpy as np
 
-from phylodm.common import row_idx_from_mat_coords, create_mat_vector, mat_shape_from_row_shape
+from phylodm.common import create_mat_vector
 from phylodm.indices import Indices
+from phylodm.pdm_c import row_idx_from_mat_coords
 
 
 class SymMat(object):
@@ -59,15 +60,11 @@ class SymMat(object):
         """Load the SymMat from a cache."""
         return SymMat()._get_from_path(path)
 
-    def _n_indices(self) -> int:
-        """Determine the number of indices given the row vector."""
-        return mat_shape_from_row_shape(self._data.shape[0])
-
     def _idx_from_key(self, key_i: str, key_j: str) -> int:
         """Determine the row vector index given the indices names."""
         i = self._indices.get_key_idx(key_i)
         j = self._indices.get_key_idx(key_j)
-        return row_idx_from_mat_coords(self._n_indices(), i, j)
+        return row_idx_from_mat_coords(len(self._indices), i, j)
 
     def _get_from_shape(self, n_indices: int, d_type: np.dtype,
                         arr_default: Union[int, float] = 0) -> 'SymMat':
@@ -113,16 +110,12 @@ class SymMat(object):
         data_idx = self._idx_from_key(key_i, key_j)
         return self._data[data_idx]
 
-    def set_value(self, key_i: str, key_j: str, value):
-        if key_i not in self._indices:
-            self._indices.add_key(key_i)
-        if key_j not in self._indices:
-            self._indices.add_key(key_j)
+    def set_value(self, key_i: str, key_j: str, value: Union[float, int]):
         self._data[self._idx_from_key(key_i, key_j)] = value
 
     def as_matrix(self) -> Tuple[Tuple[str], np.array]:
         """Return a symmetric numpy matrix given the SymMat."""
-        n_indices = self._n_indices()
+        n_indices = len(self._indices)
         mat = np.full((n_indices, n_indices), 0, dtype=self._d_type)
         mat[np.triu_indices_from(mat)] = self._data
         diag = mat[np.diag_indices_from(mat)]
