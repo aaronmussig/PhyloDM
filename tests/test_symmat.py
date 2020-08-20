@@ -74,3 +74,30 @@ class TestSymMat(unittest.TestCase):
 
         new_mat = SymMat.get_from_path(out_path)
         self.assertTrue(self.mat == new_mat)
+
+    def test_remove_keys(self):
+
+        # Generate a bunch of test conditions to simulate, with various keys missing.
+        min_dim, max_dim = 3, 30
+        for n in range(min_dim, max_dim):
+            # Remove until there are only two dimensions left.
+            for m in range(n - 2):
+
+                # Determine what indices will be removed the test matrix.
+                start_indices = set(range(n))
+                remove_indices = {int(x) for x in np.random.permutation(list(start_indices))[0:m + 1]}
+                idx_after_remove = start_indices - remove_indices
+                true_vals = generate_test_matrix(n)
+
+                # Create the full-sized test matrix.
+                test_mat = SymMat.get_from_indices(sorted(list(map(str, start_indices))), np.dtype('int32'), -1)
+                true_mat = SymMat.get_from_indices(sorted(list(map(str, idx_after_remove))), np.dtype('int32'), -1)
+                for i in range(n):
+                    for j in range(i + 1):
+                        test_mat.set_value(str(i), str(j), true_vals[i][j])
+                        if i not in remove_indices and j not in remove_indices:
+                            true_mat.set_value(str(i), str(j), true_vals[i][j])
+
+                # Remove the indices
+                test_mat.remove_keys(sorted([str(x) for x in remove_indices]))
+                self.assertEqual(test_mat, true_mat)

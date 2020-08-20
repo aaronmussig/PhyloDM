@@ -133,3 +133,5 @@ dmypy.json
 
 # OS
 .DS_Store
+
+*.cpp
