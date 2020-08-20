@@ -19,10 +19,10 @@ from typing import Collection, Tuple, Optional, Union
 
 import h5py
 import numpy as np
+from phylodm.pdm_c import row_idx_from_mat_coords
 
 from phylodm.common import create_mat_vector
 from phylodm.indices import Indices
-from phylodm.pdm_c import row_idx_from_mat_coords
 
 
 class SymMat(object):
@@ -111,7 +111,27 @@ class SymMat(object):
         return self._data[data_idx]
 
     def set_value(self, key_i: str, key_j: str, value: Union[float, int]):
+        """Set a specific value given the keys."""
         self._data[self._idx_from_key(key_i, key_j)] = value
+
+    def remove_keys(self, keys: Collection[str]):
+        """Remove the key and associated values from the matrix."""
+        key_idx = self._indices.get_key_indices()
+        keep_keys = sorted(key_idx.keys() - set(keys))
+        new_indices = Indices()
+        new_indices.add_keys(keep_keys)
+
+        # Create the new matrix and import all of the keys across.
+        new_mat = SymMat.get_from_indices(keep_keys, d_type=self._d_type,
+                                          arr_default=self._arr_default)
+
+        # Determine the mapping for importing the data across.
+        for i in range(len(keep_keys)):
+            for j in range(i + 1):
+                new_mat.set_value(keep_keys[i], keep_keys[j],
+                                  self.get_value(keep_keys[i], keep_keys[j]))
+        self._data = new_mat._data
+        self._indices = new_mat._indices
 
     def as_matrix(self) -> Tuple[Tuple[str], np.array]:
         """Return a symmetric numpy matrix given the SymMat."""
