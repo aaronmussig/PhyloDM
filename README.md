@@ -2,6 +2,7 @@
 [![PyPI](https://img.shields.io/pypi/v/phylodm)](https://pypi.org/project/phylodm/)
 ![Conda (channel only)](https://img.shields.io/conda/vn/bioconda/phylodm?color=green)
 [![codecov.io](https://codecov.io/github/aaronmussig/PhyloDM/coverage.svg?branch=master)](https://codecov.io/github/aaronmussig/PhyloDM?branch=master)
+[![DOI](https://zenodo.org/badge/251473194.svg)](https://zenodo.org/badge/latestdoi/251473194)
 
 Efficient calculation of pairwise phylogenetic distance matrices.
 
@@ -118,3 +119,6 @@ With 10,000 taxa in the tree, each program uses approximately:
 1.0.0
   - Initial release.
 ```
+
+## Citing
+Please [cite this software](https://doi.org/10.5281/zenodo.3998716) if you use it in your work.
