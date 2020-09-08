@@ -77,7 +77,7 @@ setup(name='phylodm',
               'phylodm = phylodm.__main__:main'
           ]
       },
-      install_requires=['numpy', 'dendropy', 'h5py', 'tqdm'],
+      install_requires=['numpy', 'dendropy', 'h5py'],
       setup_requires=['cython', 'numpy'],
       python_requires='>=3.6',
       data_files=[("", ["LICENSE"])],

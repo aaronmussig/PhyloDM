@@ -111,6 +111,8 @@ With 10,000 taxa in the tree, each program uses approximately:
 
 ## Changelog
 ```
+1.3.0
+  - Removed tqdm.
 1.2.0
   - Addded the remove_keys command.
 1.1.0
