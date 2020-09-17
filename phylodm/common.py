@@ -20,12 +20,12 @@ from typing import Union
 import numpy as np
 
 
-def create_mat_vector(n: int, default: Union[int, float]) -> np.array:
+def create_mat_vector(n: int, default: Union[int, float], dtype: np.dtype) -> np.ndarray:
     """Create a vector which represents the upper/lower triangle of a matrix."""
-    return np.full(n * (n + 1) // 2, default)
+    return np.full(n * (n + 1) // 2, default, dtype=dtype)
 
 
-def compact_int_mat(mat: np.array) -> np.array:
+def compact_int_mat(mat: np.ndarray) -> np.ndarray:
     """For a matrix of integers, return a copy with the smallest data type."""
     signed = (('int8', -128, 127),
               ('int16', -32768, 32767),

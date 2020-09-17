@@ -21,10 +21,6 @@ class build(build_orig):
 
     def finalize_options(self):
         super().finalize_options()
-        __builtins__.__NUMPY_SETUP__ = False
-        import numpy
-        for extension in self.distribution.ext_modules:
-            extension.include_dirs.append(numpy.get_include())
         from Cython.Build import cythonize
         self.distribution.ext_modules = cythonize(self.distribution.ext_modules,
                                                   language_level=3)
@@ -35,11 +31,11 @@ link_extra_args = list()
 # if platform.system() == "Windows":
 #     compile_extra_args = ["/std:c++latest", "/EHsc"]
 if platform.system() == "Darwin":
-    compile_extra_args.extend(['-std=c++11', "-mmacosx-version-min=10.9"])
-    link_extra_args.extend(["-stdlib=libc++", "-mmacosx-version-min=10.9"])
+    compile_extra_args.extend(["-mmacosx-version-min=10.9"])
+    link_extra_args.extend(["-mmacosx-version-min=10.9"])
 
 ext_modules = [Extension('phylodm.pdm_c', ['phylodm/pdm_c.pyx'],
-                         language='c++',
+                         language='c',
                          extra_compile_args=compile_extra_args,
                          extra_link_args=link_extra_args
                          )]

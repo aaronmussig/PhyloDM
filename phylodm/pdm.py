@@ -106,7 +106,7 @@ class PDM(SymMat):
             leaf_node.attr_child_dist = [(leaf_idx, leaf_node.edge_length if use_pd else 1)]
 
         # Create the vector to store the results.
-        self._data = create_mat_vector(len(self._indices), 0.0)
+        self._data = create_mat_vector(len(self._indices), 0.0, dtype=self._d_type)
 
         # Process the deepest nodes first, merging data at each level.
         n_indices = len(self._indices)
@@ -134,7 +134,7 @@ class PDM(SymMat):
 
                 groupings = np.array(groupings, dtype=np.uint32)
                 group_idxs = np.array(group_idxs, dtype=np.uint32)
-                group_vals = np.array(group_vals, dtype=np.float64)
+                group_vals = np.array(group_vals, dtype=self._d_type)
 
                 cartesian_sum(n_indices, groupings, group_idxs, group_vals, self._data)
 
@@ -149,7 +149,7 @@ class PDM(SymMat):
             self._d_type = self._data.dtype
         return self
 
-    def as_matrix(self, normalised: bool = False) -> Tuple[Tuple[str], np.array]:
+    def as_matrix(self, normalised: bool = False) -> Tuple[Tuple[str], np.ndarray]:
         """Return the PDM as a symmetric numpy matrix."""
         labels, mat = super().as_matrix()
         if normalised:

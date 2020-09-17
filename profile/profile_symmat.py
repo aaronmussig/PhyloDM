@@ -1,16 +1,10 @@
-
-
-import os
-import shutil
-import tempfile
-import unittest
+from timeit import Timer
 
 import numpy as np
-from timeit import Timer
 
 from phylodm.symmat import SymMat
 
-N_TESTS = 123
+N_TESTS = 2500
 
 
 def generate_test_matrix(n):
@@ -21,6 +15,7 @@ def generate_test_matrix(n):
     assert (np.all(np.abs(expected - expected.T) < 1e-8))
     return expected
 
+
 def generate_test_symmat(n):
     # Create a test matrix and populate it with expected data.
     expected = generate_test_matrix(n)
@@ -30,22 +25,15 @@ def generate_test_symmat(n):
             mat.set_value(str(i), str(j), expected[i][j])
     return mat
 
+
 def test_as_matrix(in_mat):
     in_mat.as_matrix()
 
 
 if __name__ == '__main__':
-
     test_symmat = generate_test_symmat(N_TESTS)
-
-    # test_as_matrix(test_symmat)
-
-    # before 8.832248560000153
-    # 3.39541086600002
-    # 3.217520006000086
 
     t = Timer(lambda: test_as_matrix(test_symmat))
     print(t.timeit(number=100))
-    
-    
+
     pass

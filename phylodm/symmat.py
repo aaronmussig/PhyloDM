@@ -31,7 +31,7 @@ class SymMat(object):
         self._d_type: Optional[np.dtype] = None
         self._arr_default: Optional[Union[int, float]] = None
         self._indices: Optional[Indices] = None
-        self._data: Optional[np.array] = None
+        self._data: Optional[np.ndarray] = None
 
     def __eq__(self, other) -> bool:
         """Two SymMats are equal if the data, defaults, and indices are equal."""
@@ -71,7 +71,7 @@ class SymMat(object):
         self._d_type = d_type
         self._arr_default = arr_default
         self._indices = Indices()
-        self._data = create_mat_vector(n_indices, arr_default)
+        self._data = create_mat_vector(n_indices, arr_default, self._d_type)
         return self
 
     def _get_from_indices(self, indices: Collection[str], d_type: np.dtype,
@@ -81,7 +81,7 @@ class SymMat(object):
         self._arr_default = arr_default
         self._indices = Indices()
         self._indices.add_keys(indices)
-        self._data = create_mat_vector(len(indices), arr_default)
+        self._data = create_mat_vector(len(indices), arr_default, self._d_type)
         return self
 
     def _get_from_path(self, path: str) -> 'SymMat':
@@ -132,7 +132,7 @@ class SymMat(object):
         self._data = new_mat._data
         self._indices = new_mat._indices
 
-    def as_matrix(self) -> Tuple[Tuple[str], np.array]:
+    def as_matrix(self) -> Tuple[Tuple[str], np.ndarray]:
         """Return a symmetric numpy matrix given the SymMat."""
         n_indices = len(self._indices)
         mat = np.empty((n_indices, n_indices), dtype=self._d_type)
