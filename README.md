@@ -7,10 +7,12 @@
 Efficient calculation of pairwise phylogenetic distance matrices.
 
 ## Installation
+PhyloDM should work out of the box on *nix systems.
+
 * PyPI: `pip install phylodm`
 * conda: `conda install -c bioconda phylodm`
 
-_Note: You must have a C++ compiler._
+_Note: You must have a C compiler._
 
 ## Usage
 The leaf nodes in the tree must have unique names, otherwise a `DuplicateIndex` exception is raised.
@@ -112,6 +114,9 @@ With 10,000 taxa in the tree, each program uses approximately:
 
 ## Changelog
 ```
+1.3.0
+  - Removed tqdm.
+  - get_matrix() is now 3x faster.
 1.2.0
   - Addded the remove_keys command.
 1.1.0

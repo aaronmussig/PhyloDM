@@ -18,7 +18,7 @@
 __title__ = 'phylodm'
 __description__ = 'Efficient calculation of phylogenetic distance matrices.'
 __url__ = 'https://github.com/aaronmussig/phylodm'
-__version__ = '1.2.0'
+__version__ = '1.3.0'
 __author__ = 'Aaron Mussig'
 __author_email__ = 'aaronmussig@gmail.com'
 __license__ = 'GPL3'

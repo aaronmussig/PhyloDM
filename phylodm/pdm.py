@@ -21,8 +21,8 @@ from typing import Tuple, Union
 import dendropy
 import h5py
 import numpy as np
-from tqdm import tqdm
 
+from phylodm.exceptions import PhyloDMException
 from phylodm.common import create_mat_vector, compact_int_mat
 from phylodm.indices import Indices
 from phylodm.pdm_c import cartesian_sum
@@ -73,7 +73,7 @@ class PDM(SymMat):
         """Deep copy and pre-process a DendroPy tree."""
         out = dendropy.Tree.get_from_string(tree.as_string(schema='newick'), 'newick')
         if tree.seed_node.parent_node is not None:
-            raise Exception('DendroPy did not seed the tree correctly.')
+            raise PhyloDMException('DendroPy did not seed the tree correctly.')
         return out
 
     def _get_from_dendropy(self, tree: dendropy.Tree, method: str = 'pd') -> 'PDM':
@@ -106,44 +106,42 @@ class PDM(SymMat):
             leaf_node.attr_child_dist = [(leaf_idx, leaf_node.edge_length if use_pd else 1)]
 
         # Create the vector to store the results.
-        self._data = create_mat_vector(len(self._indices), 0.0)
+        self._data = create_mat_vector(len(self._indices), 0.0, dtype=self._d_type)
 
         # Process the deepest nodes first, merging data at each level.
-        with tqdm(total=len(self._data), unit_scale=True) as p_bar:
-            n_indices = len(self._indices)
-            for cur_depth, cur_nodes in sorted(depth_to_node.items(), key=lambda x: -x[0]):
-                for node in cur_nodes:
+        n_indices = len(self._indices)
+        for cur_depth, cur_nodes in sorted(depth_to_node.items(), key=lambda x: -x[0]):
+            for node in cur_nodes:
 
-                    # Extract the groups
-                    groupings = [0]
-                    group_idxs = list()
-                    group_vals = list()
-                    child_dist, child_groups = list(), list()
-                    offset = 0
+                # Extract the groups
+                groupings = [0]
+                group_idxs = list()
+                group_vals = list()
+                child_dist, child_groups = list(), list()
+                offset = 0
 
-                    child_groups = list()
+                child_groups = list()
 
-                    for child_node in node.child_node_iter():
-                        child_groups.append(child_node.attr_child_dist)
-                        for desc_idx, desc_dist in child_node.attr_child_dist:
-                            group_idxs.append(desc_idx)
-                            group_vals.append(desc_dist)
-                            offset += 1
-                        groupings.append(offset)
-                        child_dist.extend(child_node.attr_child_dist)
-                        del child_node.attr_child_dist
+                for child_node in node.child_node_iter():
+                    child_groups.append(child_node.attr_child_dist)
+                    for desc_idx, desc_dist in child_node.attr_child_dist:
+                        group_idxs.append(desc_idx)
+                        group_vals.append(desc_dist)
+                        offset += 1
+                    groupings.append(offset)
+                    child_dist.extend(child_node.attr_child_dist)
+                    del child_node.attr_child_dist
 
-                    groupings = np.array(groupings, dtype=np.uint32)
-                    group_idxs = np.array(group_idxs, dtype=np.uint32)
-                    group_vals = np.array(group_vals, dtype=np.float64)
+                groupings = np.array(groupings, dtype=np.uint32)
+                group_idxs = np.array(group_idxs, dtype=np.uint32)
+                group_vals = np.array(group_vals, dtype=self._d_type)
 
-                    n_iter = cartesian_sum(n_indices, groupings, group_idxs, group_vals, self._data)
-                    p_bar.update(n_iter)
+                cartesian_sum(n_indices, groupings, group_idxs, group_vals, self._data)
 
-                    # Record the distance from this node to its leaf nodes, and bring up.
-                    # Add th distance from thsi node to its children
-                    if cur_depth > 0:
-                        node.attr_child_dist = [(x, y + (node.edge_length if use_pd else 1)) for x, y in child_dist]
+                # Record the distance from this node to its leaf nodes, and bring up.
+                # Add the distance from this node to its children
+                if cur_depth > 0:
+                    node.attr_child_dist = [(x, y + (node.edge_length if use_pd else 1)) for x, y in child_dist]
 
         # Use the smallest possible data type for the matrix
         if method == 'node':
@@ -151,11 +149,11 @@ class PDM(SymMat):
             self._d_type = self._data.dtype
         return self
 
-    def as_matrix(self, normalised: bool = False) -> Tuple[Tuple[str], np.array]:
+    def as_matrix(self, normalised: bool = False) -> Tuple[Tuple[str], np.ndarray]:
         """Return the PDM as a symmetric numpy matrix."""
         labels, mat = super().as_matrix()
         if normalised:
-            mat = mat * (1.0 / self._tree_length)
+            return labels, mat * (1.0 / self._tree_length)
         return labels, mat
 
     def save_to_path(self, path: str):
