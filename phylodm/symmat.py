@@ -26,12 +26,13 @@ from phylodm.indices import Indices
 
 class SymMat(object):
 
-    def __init__(self):
+    def __init__(self, cpus=1):
         """Variables are set when called by any of the static methods."""
         self._d_type: Optional[np.dtype] = None
         self._arr_default: Optional[Union[int, float]] = None
         self._indices: Optional[Indices] = None
         self._data: Optional[np.ndarray] = None
+        self._cpus = max(cpus, 1)
 
     def __eq__(self, other) -> bool:
         """Two SymMats are equal if the data, defaults, and indices are equal."""
@@ -44,20 +45,22 @@ class SymMat(object):
 
     @staticmethod
     def get_from_shape(n_indices: int, d_type: np.dtype,
-                       arr_default: Union[int, float] = 0) -> 'SymMat':
+                       arr_default: Union[int, float] = 0,
+                       cpus: int = 1) -> 'SymMat':
         """Create a blank SymMat given the specifications."""
-        return SymMat()._get_from_shape(n_indices, d_type, arr_default)
+        return SymMat(cpus)._get_from_shape(n_indices, d_type, arr_default)
 
     @staticmethod
     def get_from_indices(indices: Collection[str], d_type: np.dtype,
-                         arr_default: Union[int, float] = 0) -> 'SymMat':
+                         arr_default: Union[int, float] = 0,
+                         cpus: int = 1) -> 'SymMat':
         """Create a blank SymMat given the indices."""
-        return SymMat()._get_from_indices(indices, d_type, arr_default)
+        return SymMat(cpus)._get_from_indices(indices, d_type, arr_default)
 
     @staticmethod
-    def get_from_path(path: str) -> 'SymMat':
+    def get_from_path(path: str, cpus: int = 1) -> 'SymMat':
         """Load the SymMat from a cache."""
-        return SymMat()._get_from_path(path)
+        return SymMat(cpus)._get_from_path(path)
 
     def _idx_from_key(self, key_i: str, key_j: str) -> int:
         """Determine the row vector index given the indices names."""
@@ -122,7 +125,8 @@ class SymMat(object):
 
         # Create the new matrix and import all of the keys across.
         new_mat = SymMat.get_from_indices(keep_keys, d_type=self._d_type,
-                                          arr_default=self._arr_default)
+                                          arr_default=self._arr_default,
+                                          cpus=self._cpus)
 
         # Determine the mapping for importing the data across.
         for i in range(len(keep_keys)):
@@ -136,5 +140,5 @@ class SymMat(object):
         """Return a symmetric numpy matrix given the SymMat."""
         n_indices = len(self._indices)
         mat = np.empty((n_indices, n_indices), dtype=self._d_type)
-        row_vec_to_symmat(self._data, mat)
+        row_vec_to_symmat(self._data, mat, cpus=self._cpus)
         return self._indices.get_keys(), mat

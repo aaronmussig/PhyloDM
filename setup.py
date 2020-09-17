@@ -26,13 +26,17 @@ class build(build_orig):
                                                   language_level=3)
 
 
+# Environment specific compiler setttings.
 compile_extra_args = ['-O3', '-ffast-math', '-march=native']
 link_extra_args = list()
-# if platform.system() == "Windows":
-#     compile_extra_args = ["/std:c++latest", "/EHsc"]
-if platform.system() == "Darwin":
-    compile_extra_args.extend(["-mmacosx-version-min=10.9"])
-    link_extra_args.extend(["-mmacosx-version-min=10.9"])
+if platform.system() == "Windows":
+    print('Warning! Untested environment.')
+elif platform.system() == "Darwin":
+    compile_extra_args.extend(["-mmacosx-version-min=10.9", '-Xpreprocessor', '-fopenmp'], )
+    link_extra_args.extend(["-mmacosx-version-min=10.9", '-Xpreprocessor', '-fopenmp'])
+else:
+    compile_extra_args.extend(['-fopenmp'])
+    link_extra_args.extend(['-fopenmp'])
 
 ext_modules = [Extension('phylodm.pdm_c', ['phylodm/pdm_c.pyx'],
                          language='c',
