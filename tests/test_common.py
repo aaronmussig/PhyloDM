@@ -28,14 +28,6 @@ N_TESTS = 100
 
 class TestCommon(unittest.TestCase):
 
-    def test_create_mat_vector(self):
-        default = 0
-        for n in range(N_TESTS):
-            vec = create_mat_vector(n, default)
-            exp = len(np.triu_indices(n)[0])
-            self.assertEqual(len(vec), exp)
-            self.assertTrue(np.all(vec == default))
-
     def test_row_idx_from_mat_coords(self):
         expected = np.triu_indices(N_TESTS)
         for true_idx, (i, j) in enumerate(zip(expected[0], expected[1])):

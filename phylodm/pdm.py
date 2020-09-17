@@ -22,6 +22,7 @@ import dendropy
 import h5py
 import numpy as np
 
+from phylodm.exceptions import PhyloDMException
 from phylodm.common import create_mat_vector, compact_int_mat
 from phylodm.indices import Indices
 from phylodm.pdm_c import cartesian_sum
@@ -72,7 +73,7 @@ class PDM(SymMat):
         """Deep copy and pre-process a DendroPy tree."""
         out = dendropy.Tree.get_from_string(tree.as_string(schema='newick'), 'newick')
         if tree.seed_node.parent_node is not None:
-            raise Exception('DendroPy did not seed the tree correctly.')
+            raise PhyloDMException('DendroPy did not seed the tree correctly.')
         return out
 
     def _get_from_dendropy(self, tree: dendropy.Tree, method: str = 'pd') -> 'PDM':
@@ -138,7 +139,7 @@ class PDM(SymMat):
                 cartesian_sum(n_indices, groupings, group_idxs, group_vals, self._data)
 
                 # Record the distance from this node to its leaf nodes, and bring up.
-                # Add th distance from thsi node to its children
+                # Add the distance from this node to its children
                 if cur_depth > 0:
                     node.attr_child_dist = [(x, y + (node.edge_length if use_pd else 1)) for x, y in child_dist]
 
@@ -152,7 +153,7 @@ class PDM(SymMat):
         """Return the PDM as a symmetric numpy matrix."""
         labels, mat = super().as_matrix()
         if normalised:
-            mat = mat * (1.0 / self._tree_length)
+            return labels, mat * (1.0 / self._tree_length)
         return labels, mat
 
     def save_to_path(self, path: str):

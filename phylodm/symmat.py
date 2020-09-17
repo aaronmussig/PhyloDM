@@ -19,8 +19,7 @@ from typing import Collection, Tuple, Optional, Union
 
 import h5py
 import numpy as np
-from phylodm.pdm_c import row_idx_from_mat_coords
-
+from phylodm.pdm_c import row_idx_from_mat_coords, row_vec_to_symmat
 from phylodm.common import create_mat_vector
 from phylodm.indices import Indices
 
@@ -136,9 +135,6 @@ class SymMat(object):
     def as_matrix(self) -> Tuple[Tuple[str], np.array]:
         """Return a symmetric numpy matrix given the SymMat."""
         n_indices = len(self._indices)
-        mat = np.full((n_indices, n_indices), 0, dtype=self._d_type)
-        mat[np.triu_indices_from(mat)] = self._data
-        diag = mat[np.diag_indices_from(mat)]
-        mat = mat + mat.T
-        mat[np.diag_indices_from(mat)] = mat[np.diag_indices_from(mat)] - diag
+        mat = np.empty((n_indices, n_indices), dtype=self._d_type)
+        row_vec_to_symmat(self._data, mat)
         return self._indices.get_keys(), mat

@@ -30,7 +30,7 @@ class build(build_orig):
                                                   language_level=3)
 
 
-compile_extra_args = ['-O3']
+compile_extra_args = ['-O3', '-ffast-math', '-march=native']
 link_extra_args = list()
 # if platform.system() == "Windows":
 #     compile_extra_args = ["/std:c++latest", "/EHsc"]

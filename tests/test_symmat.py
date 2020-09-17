@@ -28,7 +28,7 @@ N_TESTS = 100
 
 
 def generate_test_matrix(n):
-    expected = np.full((n, n), -1)
+    expected = np.full((n, n), -1, dtype=np.int32)
     expected[np.triu_indices(n, 1)] = np.random.randint(0, 1e6, (n * (n - 1)) // 2)
     expected = expected + expected.T
     expected[np.diag_indices(n)] = np.random.randint(0, 1e6, n)
