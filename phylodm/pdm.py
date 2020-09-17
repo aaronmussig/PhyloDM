@@ -31,30 +31,30 @@ from phylodm.symmat import SymMat
 
 class PDM(SymMat):
 
-    def __init__(self):
+    def __init__(self, cpus=1):
         """Variables are set when called by any of the static methods."""
-        super().__init__()
+        super().__init__(cpus)
         self._tree_length = None
         self._method = None
 
     @staticmethod
-    def get_from_dendropy(tree: dendropy.Tree, method: str = 'pd') -> 'PDM':
+    def get_from_dendropy(tree: dendropy.Tree, method: str = 'pd', cpus: int = 1) -> 'PDM':
         """Create a PDM from a dendropy tree object."""
-        return PDM()._get_from_dendropy(tree, method)
+        return PDM(cpus)._get_from_dendropy(tree, method)
 
     @staticmethod
-    def get_from_newick_file(path_tree: str, method: str = 'pd') -> 'PDM':
+    def get_from_newick_file(path_tree: str, method: str = 'pd', cpus: int = 1) -> 'PDM':
         """Create a PDM from a newick file."""
         tree = dendropy.Tree.get_from_path(path_tree,
                                            schema='newick',
                                            rooting='force-unrooted',
                                            preserve_underscores=True)
-        return PDM.get_from_dendropy(tree, method)
+        return PDM.get_from_dendropy(tree, method, cpus)
 
     @staticmethod
-    def get_from_path(path: str) -> 'PDM':
+    def get_from_path(path: str, cpus: int = 1) -> 'PDM':
         """Load a PDM from a cache."""
-        return PDM()._get_from_path(path)
+        return PDM(cpus)._get_from_path(path)
 
     @staticmethod
     def _get_int_node_depth(tree):
@@ -136,7 +136,7 @@ class PDM(SymMat):
                 group_idxs = np.array(group_idxs, dtype=np.uint32)
                 group_vals = np.array(group_vals, dtype=self._d_type)
 
-                cartesian_sum(n_indices, groupings, group_idxs, group_vals, self._data)
+                cartesian_sum(n_indices, groupings, group_idxs, group_vals, self._data, self._cpus)
 
                 # Record the distance from this node to its leaf nodes, and bring up.
                 # Add the distance from this node to its children

@@ -2,14 +2,14 @@
 #cython: language_level=3
 
 import cython
-
+from cython.parallel import parallel, prange
 
 ctypedef unsigned char uchar
 ctypedef unsigned short ushort
 ctypedef unsigned int uint
 ctypedef unsigned long ulong
 
-ctypedef fused fused_dtypes:
+ctypedef fused arrtype:
     char
     unsigned char
     short
@@ -51,11 +51,12 @@ cpdef uint n_cartesian(uint[:] groupings) nogil:
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef Py_ssize_t cartesian_sum_fused(Py_ssize_t n_indices, uint[:] groupings, uint[:] group_idxs, fused_dtypes[:] group_vals, fused_dtypes[:] data) nogil:
+cpdef Py_ssize_t cartesian_sum(Py_ssize_t n_indices, uint[:] groupings, uint[:] group_idxs, 
+                               arrtype[:] group_vals, arrtype[:] data, uint cpus) nogil:
     cdef Py_ssize_t i, i_start_idx, i_end_idx, j, j_start_idx, j_end_idx, cur_i, tax_i, cur_j, n_iter, n_groups
     with nogil:
         n_iter = 0
-        for i in range(groupings.shape[0] - 1):
+        for i in prange(groupings.shape[0] - 1, num_threads=cpus, schedule='guided'):
             i_start_idx = groupings[i]
             i_end_idx = groupings[i+1]
 
@@ -70,76 +71,17 @@ cpdef Py_ssize_t cartesian_sum_fused(Py_ssize_t n_indices, uint[:] groupings, ui
                         n_iter += 1
     return n_iter
 
-def cartesian_sum(n_indices, groupings, group_idxs, group_vals, data):
-    if not data.dtype == group_vals.dtype:
-        raise ValueError('Distance and output data types do not match.')
-    if data.dtype.name == 'int8':
-        return cartesian_sum_fused[char](n_indices, groupings, group_idxs, group_vals, data)
-    elif data.dtype.name == 'uint8':
-        return cartesian_sum_fused[uchar](n_indices, groupings, group_idxs, group_vals, data)
-    elif data.dtype.name == 'int16':
-        return cartesian_sum_fused[short](n_indices, groupings, group_idxs, group_vals, data)
-    elif data.dtype.name == 'uint16':
-        return cartesian_sum_fused[ushort](n_indices, groupings, group_idxs, group_vals, data)
-    elif data.dtype.name == 'int32':
-        return cartesian_sum_fused[int](n_indices, groupings, group_idxs, group_vals, data)
-    elif data.dtype.name == 'uint32':
-        return cartesian_sum_fused[uint](n_indices, groupings, group_idxs, group_vals, data)
-    elif data.dtype.name == 'int64':
-        return cartesian_sum_fused[long](n_indices, groupings, group_idxs, group_vals, data)
-    elif data.dtype.name == 'uint64':
-        return cartesian_sum_fused[ulong](n_indices, groupings, group_idxs, group_vals, data)
-    elif data.dtype.name == 'float32':
-        return cartesian_sum_fused[float](n_indices, groupings, group_idxs, group_vals, data)
-    elif data.dtype.name == 'float64':
-        return cartesian_sum_fused[double](n_indices, groupings, group_idxs, group_vals, data)
-    else:
-        raise TypeError(f'Unknown type: {data.dtype}')
-
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void row_vec_to_symmat_fused(fused_dtypes[:] vec, fused_dtypes[:, :] mat) nogil:
+cpdef void row_vec_to_symmat(arrtype[:] vec, arrtype[:, :] mat, uint cpus) nogil:
     """Convert the row vector to a symmetric matrix."""
     cdef Py_ssize_t i, j, n, cur_idx
     with nogil:
         n = mat.shape[0]
-        # Set each of the elements.
-        for i in range(n):
+        for i in prange(n, num_threads=cpus, schedule='guided'):
             for j in range(i):
                 cur_idx = row_idx_from_mat_coords(n, i, j)
                 mat[i, j] = vec[cur_idx]
                 mat[j, i] = vec[cur_idx]
-
-            # Set the diagonal.
             mat[i, i] = 0
-
-
-def row_vec_to_symmat(vec, mat):
-    if not vec.dtype == mat.dtype:
-        raise ValueError('Distance and output data types do not match.')
-
-    if vec.dtype.name == 'int8':
-        row_vec_to_symmat_fused[char](vec, mat)
-    elif vec.dtype.name == 'uint8':
-        row_vec_to_symmat_fused[uchar](vec, mat)
-    elif vec.dtype.name == 'int16':
-        row_vec_to_symmat_fused[short](vec, mat)
-    elif vec.dtype.name == 'uint16':
-        row_vec_to_symmat_fused[ushort](vec, mat)
-    elif vec.dtype.name == 'int32':
-        row_vec_to_symmat_fused[int](vec, mat)
-    elif vec.dtype.name == 'uint32':
-        row_vec_to_symmat_fused[uint](vec, mat)
-    elif vec.dtype.name == 'int64':
-        row_vec_to_symmat_fused[long](vec, mat)
-    elif vec.dtype.name == 'uint64':
-        row_vec_to_symmat_fused[ulong](vec, mat)
-    elif vec.dtype.name == 'float32':
-        row_vec_to_symmat_fused[float](vec, mat)
-    elif vec.dtype.name == 'float64':
-        row_vec_to_symmat_fused[double](vec, mat)
-    else:
-        raise TypeError(f'Unknown type: {vec.dtype}')
-
-

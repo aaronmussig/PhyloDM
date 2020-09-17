@@ -29,12 +29,12 @@ from phylodm.pdm import PDM
 
 # Load from DendroPy
 t = dendropy.Tree.get_from_string('(A:4,(B:3,C:4):1);', 'newick')
-pdm = PDM.get_from_dendropy(tree=t, method='pd')
+pdm = PDM.get_from_dendropy(tree=t, method='pd', cpus=1)
 
 # Load from Newick
 with open('/tmp/newick.tree', 'w') as fh:
     fh.write('(A:4,(B:3,C:4):1);')
-pdm = PDM.get_from_newick_file('/tmp/newick.tree', method='pd')
+pdm = PDM.get_from_newick_file('/tmp/newick.tree', method='pd', cpus=1)
 ```
 
 Once created, a `PDM` can be cached to disk, where it can be later loaded:
@@ -45,7 +45,7 @@ from phylodm.pdm import PDM
 
 # Create a PDM.
 t = dendropy.Tree.get_from_string('(A:4,(B:3,C:4):1);', 'newick')
-pdm_a = PDM.get_from_dendropy(tree=t, method='pd')
+pdm_a = PDM.get_from_dendropy(tree=t, method='pd', cpus=1)
 
 # Write to cache.
 pdm_a.save_to_path('/tmp/pdm.mat')
@@ -63,7 +63,7 @@ from phylodm.pdm import PDM
 
 # Load from DendroPy
 t = dendropy.Tree.get_from_string('(A:4,(B:3,C:4):1);', 'newick')
-pdm = PDM.get_from_dendropy(tree=t, method='pd')
+pdm = PDM.get_from_dendropy(tree=t, method='pd', cpus=1)
 labels, mat = pdm.as_matrix(normalised=False)
 """
 /------------[4]------------ A
@@ -114,6 +114,8 @@ With 10,000 taxa in the tree, each program uses approximately:
 
 ## Changelog
 ```
+1.3.1
+  - Use OpenMP to parallelize PDM methods.
 1.3.0
   - Removed tqdm.
   - get_matrix() is now 3x faster.
