@@ -3,7 +3,7 @@ import sys
 
 import dendropy
 
-from phylodm.pdm import PDM
+from phylodm import PhyloDM
 
 
 def main(args=None):
@@ -15,7 +15,8 @@ def main(args=None):
     tree = dendropy.Tree.get_from_path(args.path_tree, schema='newick')
 
     if args.method == 'phylodm':
-        PDM.get_from_dendropy(tree, method='pd')
+        pdm = PhyloDM()
+        pdm.load_from_newick_path(args.path_tree)
         sys.exit(0)
     elif args.method == 'dendropy':
         tree.phylogenetic_distance_matrix()

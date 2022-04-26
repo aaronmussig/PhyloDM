@@ -17,19 +17,20 @@
 
 import argparse
 import os
+import platform
 import random
 import re
 import subprocess
 import sys
 from multiprocessing import Pool
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from dendropy.simulate import treesim
 from tqdm import tqdm
-import matplotlib
 
 __version__ = '1.1.0'
 
@@ -43,16 +44,17 @@ def print_help():
 def tree_worker(args):
     path, n_taxa = args
     tree = treesim.birth_death_tree(birth_rate=1.0, death_rate=0.5,
-                                    ntax=n_taxa, rng=random.Random(42))
-    tree.write(path=path, schema="newick")
+                                    num_extant_tips=n_taxa, rng=random.Random(42))
+    with open(path, 'w') as f:
+        f.write(tree.as_string(schema='newick')[5:])
     return
 
 
 def queue_worker(args):
     out_path, tree_path, method, n_taxa, cur_trial = args
-
+    exe = 'gtime' if platform.system() == 'Darwin' else '/usr/bin/time'
     script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'phylodm_perf_worker.py')
-    args = ['/usr/bin/time', '--verbose', 'python', script_path, tree_path, method]
+    args = [exe, '--verbose', 'python', script_path, tree_path, method]
 
     proc = subprocess.Popen(args, stderr=subprocess.PIPE, encoding='utf-8')
     stdout, stderr = proc.communicate()
@@ -60,6 +62,8 @@ def queue_worker(args):
     if proc.returncode == 0:
         with open(out_path, 'w') as fh:
             fh.write(stderr)
+    else:
+        raise Exception(f'Non-zero return code: {stderr}')
     return
 
 
@@ -142,14 +146,14 @@ def plot_test_data(data_dir, n_taxa, n_trials):
     n_boot = 1e4
 
     # Plot each series overthe range of data points
-    plt.figure(figsize=(5, 3))
+    plt.figure(figsize=(7, 5))
     sns.set_style("whitegrid")
 
     # sns.set(style="ticks", palette="colorblind")
-    sns.regplot(x="n_taxa", y="tot_sec", data=df_phylo, x_estimator=np.mean, order=2,
-                label='PhyloDM', n_boot=n_boot)
-    ax = sns.regplot(x="n_taxa", y="tot_sec", data=df_dendro, x_estimator=np.mean, order=2,
-                     label='DendroPy', color="r", n_boot=n_boot)
+    sns.lineplot(x="n_taxa", y="tot_sec", data=df_phylo, markers=True,
+                label='PhyloDM')
+    ax = sns.lineplot(x="n_taxa", y="tot_sec", data=df_dendro,   markers=True,
+                     label='DendroPy', color="r")
     ax.set(xlabel='Number of taxa in tree', ylabel='PDM construction time (min)',
            title='DendroPy vs. PhyloDM PDM Construction Time', yscale='log')
 
@@ -169,13 +173,13 @@ def plot_test_data(data_dir, n_taxa, n_trials):
 
     # MEMORY
     # Fit the memory data
-    plt.figure(figsize=(5, 3))
+    plt.figure(figsize=(7, 5))
 
     sns.set_style("whitegrid")
-    sns.regplot(x="n_taxa", y="max_mem", data=df_phylo, x_estimator=np.mean, order=2,
-                label='PhyloDM', n_boot=n_boot)
-    ax = sns.regplot(x="n_taxa", y="max_mem", data=df_dendro, x_estimator=np.mean, order=2,
-                     label='DendroPy', color="r", n_boot=n_boot)
+    sns.lineplot(x="n_taxa", y="max_mem", data=df_phylo,   markers=True,
+                label='PhyloDM')
+    ax = sns.lineplot(x="n_taxa", y="max_mem", data=df_dendro,   markers=True,
+                     label='DendroPy', color="r")
     ax.set(xlabel='Number of taxa in tree', ylabel='Maximum memory used (GB)',
            title='DendroPy vs. PhyloDM PDM Maximum Memory Usage', yscale='log')
 
@@ -184,8 +188,6 @@ def plot_test_data(data_dir, n_taxa, n_trials):
 
     xlabels = [f'{int(x)}' for x in ax.get_xticks()]
     ax.set_xticklabels(xlabels)
-
-
 
     ax.yaxis.set_minor_locator(matplotlib.ticker.LogLocator(base=10.0, subs='all'))
     ax.yaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())

@@ -1,51 +1,39 @@
-import os
-import platform
-import re
-from distutils.command.build import build as build_orig
+import sys
 
-from setuptools import setup, Extension
+# Restrict to Python 3.7+
+if sys.version_info < (3, 7):
+    sys.exit('Only Python 3.7+ is supported')
+
+# Check setuptools is installed
+try:
+    from setuptools import setup
+except ImportError:
+    sys.exit('Please install setuptools before installing this package.')
+
+# Check setuptools_rust is installed
+try:
+    from setuptools_rust import Binding, RustExtension
+except ImportError:
+    sys.exit('Please install setuptools-rust before installing this package.')
 
 
-def read_version():
-    path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'phylodm/__init__.py')
-    with open(path) as fh:
-        return re.search(r'__version__\s?=\s?[\'"](.+)[\'"]', fh.read()).group(1)
-
-
+# Read the long description from the README file
 def readme():
     with open('README.md') as f:
         return f.read()
 
 
-class build(build_orig):
+# Read the version from the Cargo.toml file
+def get_package_version():
+    with open('Cargo.toml') as f:
+        for line in f:
+            if line.startswith('version ='):
+                return line.split('=')[1].strip().strip('"').strip("'")
 
-    def finalize_options(self):
-        super().finalize_options()
-        from Cython.Build import cythonize
-        self.distribution.ext_modules = cythonize(self.distribution.ext_modules,
-                                                  language_level=3)
 
-
-# Environment specific compiler setttings.
-compile_extra_args = ['-O3', '-ffast-math', '-march=native']
-link_extra_args = list()
-if platform.system() == "Windows":
-    print('Warning! Untested environment.')
-elif platform.system() == "Darwin":
-    compile_extra_args.extend(["-mmacosx-version-min=10.9", '-Xpreprocessor', '-fopenmp'], )
-    link_extra_args.extend(["-mmacosx-version-min=10.9", '-Xpreprocessor', '-fopenmp'])
-else:
-    compile_extra_args.extend(['-fopenmp'])
-    link_extra_args.extend(['-fopenmp'])
-
-ext_modules = [Extension('phylodm.pdm_c', ['phylodm/pdm_c.pyx'],
-                         language='c',
-                         extra_compile_args=compile_extra_args,
-                         extra_link_args=link_extra_args
-                         )]
-
+# Create the package
 setup(name='phylodm',
-      version=read_version(),
+      version=get_package_version(),
       description='Efficient calculation of phylogenetic distance matrices.',
       long_description=readme(),
       long_description_content_type='text/markdown',
@@ -59,28 +47,24 @@ setup(name='phylodm',
           "Source Code": "https://github.com/aaronmussig/PhyloDM",
       },
       classifiers=[
-          'Development Status :: 5 - Production/Stable',
+          'Development Status :: 4 - Beta',
           'Intended Audience :: Science/Research',
           'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
           'Natural Language :: English',
           'Operating System :: OS Independent',
-          'Programming Language :: Python :: 3.6',
           'Programming Language :: Python :: 3.7',
           'Programming Language :: Python :: 3.8',
+          'Programming Language :: Python :: 3.9',
+          'Programming Language :: Python :: 3.10',
+          'Programming Language :: Rust',
           'Topic :: Scientific/Engineering :: Bio-Informatics',
       ],
       keywords='phylogenetic distance matrix symmetric',
       packages=['phylodm'],
-      package_data={'phylodm': ['pdm_c.pyx']},
-      entry_points={
-          'console_scripts': [
-              'phylodm = phylodm.__main__:main'
-          ]
-      },
-      install_requires=['numpy', 'dendropy', 'h5py'],
-      setup_requires=['cython', 'numpy'],
-      python_requires='>=3.6',
+      install_requires=['numpy'],
+      setup_requires=['setuptools-rust', 'setuptools', 'wheel'],
+      python_requires='>=3.7',
       data_files=[("", ["LICENSE"])],
-      ext_modules=ext_modules,
-      cmdclass={'build': build}
+      rust_extensions=[RustExtension("phylodm.phylodm", binding=Binding.PyO3, features=['python'])],
+      zip_safe=False,
       )

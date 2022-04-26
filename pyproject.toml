@@ -1,0 +1,9 @@
+[tool.cibuildwheel]
+before-all = "curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y"
+skip = "cp27-* cp34-* cp35-* cp36-* pp* *-win32 *-musllinux*"
+environment = 'PATH="$PATH:$HOME/.cargo/bin"'
+test-command = "python -m unittest discover {project}/test"
+test-requires = ["dendropy", "numpy"]
+
+[build-system]
+requires = ["setuptools", "wheel", "setuptools-rust"]

@@ -1,70 +1,61 @@
 # PhyloDM
 [![PyPI](https://img.shields.io/pypi/v/phylodm)](https://pypi.org/project/phylodm/)
-![Conda (channel only)](https://img.shields.io/conda/vn/bioconda/phylodm?color=green)
-[![codecov.io](https://codecov.io/github/aaronmussig/PhyloDM/coverage.svg?branch=master)](https://codecov.io/github/aaronmussig/PhyloDM?branch=master)
+[![BioConda](https://img.shields.io/conda/vn/bioconda/phylodm?color=green)](https://anaconda.org/bioconda/phylodm)
+[![Crates](https://img.shields.io/crates/v/phylodm?color=orange)](https://crates.io/crates/phylodm)
 [![DOI](https://zenodo.org/badge/251473194.svg)](https://zenodo.org/badge/latestdoi/251473194)
 
 Efficient calculation of pairwise phylogenetic distance matrices.
 
 ## Installation
-PhyloDM should work out of the box on *nix systems.
+
+The easiest installation method is through Conda. 
+If you choose to install via PyPI 
+ensure that you have a [Rust compiler](https://www.rust-lang.org/tools/install).
 
 * PyPI: `pip install phylodm`
-* conda: `conda install -c bioconda phylodm`
+* Conda: `conda install -c bioconda phylodm`
 
-_Note: You must have a C compiler._
 
 ## Usage
-The leaf nodes in the tree must have unique names, otherwise a `DuplicateIndex` exception is raised.
 
-### Python library
-
-#### Creating a phylogenetic distance matrix
-A phylogenetic distance matrix (`PDM`) object can be created from either a DendroPy tree, or a
-newick file:
+### Creating a phylogenetic distance matrix
+A phylogenetic distance matrix (`PhyloDM`) object can be created from a newick file:
 
 ```python
-import dendropy
-from phylodm.pdm import PDM
+from phylodm import PhyloDM
 
-# Load from DendroPy
-t = dendropy.Tree.get_from_string('(A:4,(B:3,C:4):1);', 'newick')
-pdm = PDM.get_from_dendropy(tree=t, method='pd', cpus=1)
-
-# Load from Newick
+# Create a test tree
 with open('/tmp/newick.tree', 'w') as fh:
     fh.write('(A:4,(B:3,C:4):1);')
-pdm = PDM.get_from_newick_file('/tmp/newick.tree', method='pd', cpus=1)
+
+# Load from newick
+pdm = PhyloDM()
+pdm.load_from_newick_path('/tmp/newick.tree')
 ```
 
-Once created, a `PDM` can be cached to disk, where it can be later loaded:
-
-```python
-import dendropy
-from phylodm.pdm import PDM
-
-# Create a PDM.
-t = dendropy.Tree.get_from_string('(A:4,(B:3,C:4):1);', 'newick')
-pdm_a = PDM.get_from_dendropy(tree=t, method='pd', cpus=1)
-
-# Write to cache.
-pdm_a.save_to_path('/tmp/pdm.mat')
-
-# Load from cache.
-pdm_b = PDM.get_from_path('/tmp/pdm.mat')
-```
-
-#### Accessing data
-The `PDM.as_matrix` method generates a symmetrical numpy distance matrix and returns a tuple of
+### Accessing data
+The `dm` method generates a symmetrical numpy distance matrix and returns a tuple of
 keys in the matrix row/column order:
-```python
-import dendropy
-from phylodm.pdm import PDM
 
-# Load from DendroPy
-t = dendropy.Tree.get_from_string('(A:4,(B:3,C:4):1);', 'newick')
-pdm = PDM.get_from_dendropy(tree=t, method='pd', cpus=1)
-labels, mat = pdm.as_matrix(normalised=False)
+```python
+from phylodm import PhyloDM
+
+# Create a test tree
+with open('/tmp/newick.tree', 'w') as fh:
+    fh.write('(A:4,(B:3,C:4):1);')
+
+# Load from Newick file
+pdm = PhyloDM.load_from_newick_path('/tmp/newick.tree')
+
+# Or, load from a Dendropy object
+import dendropy
+tree = dendropy.Tree.get_from_path('/tmp/newick.tree', schema='newick')
+pdm = PhyloDM.load_from_dendropy(tree)
+
+# Calculate the PDM
+dm = pdm.dm(norm=False)
+labels = pdm.taxa()
+
 """
 /------------[4]------------ A
 +
@@ -73,30 +64,16 @@ labels, mat = pdm.as_matrix(normalised=False)
            \------------[4]------------- C
            
 labels = ('A', 'B', 'C')
-mat = [[0. 8. 9.]
-       [8. 0. 7.]
-       [9. 7. 0.]]
+    dm = [[0. 8. 9.]
+          [8. 0. 7.]
+          [9. 7. 0.]]
 """
-
-# Retrieving a specific value
-pdm.get_value('A', 'A')  # 0
-pdm.get_value('A', 'C')  # 9
-pdm.get_value('C', 'A')  # 9
 ```
 
-#### Method
-The method parameter can be either patristic distance (`pd`) or the count of edges between 
-leaves (`node`).
 
-#### Normalisation
-If true, the data will be returned as normalised depending on the method:
-* `pd` = sum of all edges
-* `node` = count of all edges
+### Normalisation
+If true, the data will be returned as normalised by the sum of all edges in the tree.
 
-### CLI
-The CLI can be used to create a phylogenetic distance matrix given a newick tree, e.g.:
- 
-`python -m phylodm /path/to/newick.tree pd /path/to/matrix.mat`
 
 ## Performance
 Tests were executed using the `scripts/phylodm_perf.py` script with 10 trials.
@@ -107,13 +84,15 @@ are less than 500 taxa, then use DendroPy for all of the great
 features it provides. 
 
 With 10,000 taxa in the tree, each program uses approximately:
-* PhyloDM = 4 seconds / 2 GB memory
-* DendroPy = 17 minutes / 90 GB memory
+* PhyloDM = 4 seconds / 40 MB memory
+* DendroPy = 17 minutes / 22 GB memory
 
 ![DendroPy vs. PhyloDM PDM Construction Time](docs/img/dendropy_vs_phylodm_time.png)![DendroPy vs. PhyloDM PDM Maximum Memory Usage](docs/img/denropy_vs_phylodm_memory.png)
 
 ## Changelog
 ```
+2.0.0
+  - Re-write in Rust (2x faster)
 1.3.1
   - Use OpenMP to parallelize PDM methods.
 1.3.0

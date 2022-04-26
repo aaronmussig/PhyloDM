@@ -1,0 +1,27 @@
+[package]
+name = "phylodm"
+version = "2.0.0"
+authors = ["Aaron Mussig <aaronmussig@gmail.com>"]
+edition = "2021"
+description = "Efficient calculation of phylogenetic distance matrices."
+readme = "README.md"
+repository = "https://github.com/aaronmussig/PhyloDM"
+license = "GPL-3.0-or-later"
+license-file = "LICENSE"
+
+
+[lib]
+crate-type=["cdylib", "rlib"]
+
+[features]
+python = ["pyo3/extension-module"]
+
+[dependencies]
+light_phylogeny = "1.4"
+derive_more = "0.99"
+itertools = "0.10"
+pyo3 = { version = "0.16", features = ["extension-module"], optional=true }
+numpy = "0.16"
+
+[profile.release]
+lto = true

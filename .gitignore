@@ -136,3 +136,8 @@ dmypy.json
 
 *.cpp
 *.c
+
+docs/build/
+
+/target
+
