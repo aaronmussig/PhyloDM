@@ -65,6 +65,6 @@ setup(name='phylodm',
       setup_requires=['setuptools-rust', 'setuptools', 'wheel'],
       python_requires='>=3.7',
       data_files=[("", ["LICENSE"])],
-      rust_extensions=[RustExtension("phylodm.phylodm", binding=Binding.PyO3, features=['python'])],
+      rust_extensions=[RustExtension("phylodm.pdm", binding=Binding.PyO3, features=['python'])],
       zip_safe=False,
       )

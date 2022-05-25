@@ -62,7 +62,7 @@ impl PhyloDM {
 }
 
 #[pymodule]
-fn phylodm(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn pdm(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<PhyloDM>()?;
     Ok(())
 }
