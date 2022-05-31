@@ -141,3 +141,7 @@ docs/build/
 
 /target
 
+wheelhouse/
+
+# Node modules
+node_modules/
