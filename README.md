@@ -116,4 +116,5 @@ With 10,000 taxa in the tree, each program uses approximately:
 * PhyloDM = 4 seconds / 40 MB memory
 * DendroPy = 17 minutes / 22 GB memory
 
-![DendroPy vs. PhyloDM PDM Construction Time](docs/img/dendropy_vs_phylodm_time.png)![DendroPy vs. PhyloDM PDM Maximum Memory Usage](docs/img/denropy_vs_phylodm_memory.png)
+![DendroPy vs. PhyloDM PDM Construction Time](https://raw.githubusercontent.com/aaronmussig/PhyloDM/main/docs/img/dendropy_vs_phylodm_time.png)
+![DendroPy vs. PhyloDM PDM Maximum Memory Usage](https://raw.githubusercontent.com/aaronmussig/PhyloDM/main/docs/img/denropy_vs_phylodm_memory.png)
