@@ -6,7 +6,7 @@ edition = "2021"
 description = "Efficient calculation of phylogenetic distance matrices."
 readme = "README.md"
 repository = "https://github.com/aaronmussig/PhyloDM"
-license = "GPL-3.0-or-later"
+license = "GPL-3.0"
 license-file = "LICENSE"
 
 
