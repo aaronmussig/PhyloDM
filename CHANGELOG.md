@@ -1,3 +1,10 @@
+## [2.0.3](https://github.com/aaronmussig/PhyloDM/compare/v2.0.2...v2.0.3) (2022-05-31)
+
+
+### Bug Fixes
+
+* **ci:** Updated CI for semantic release. ([c5b15dc](https://github.com/aaronmussig/PhyloDM/commit/c5b15dcd8ff6f48c4890079203e24de33d3c2ec0))
+
 ## [2.0.2](https://github.com/aaronmussig/PhyloDM/compare/v2.0.1...v2.0.2) (2022-05-31)
 
 
