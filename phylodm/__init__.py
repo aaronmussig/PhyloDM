@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     import dendropy
     import numpy as np
 
-from phylodm.pdm import PhyloDM as PDM
+from .pdm import PhyloDM as PDM
 
 
 class PhyloDM:
