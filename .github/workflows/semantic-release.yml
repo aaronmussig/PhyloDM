@@ -18,10 +18,3 @@ jobs:
       - run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-      - uses: actions/upload-artifact@v3
-        with:
-          name: semantic-release
-          path: |
-            phylodm/__init__.py
-            CHANGELOG.md
-          retention-days: 1
