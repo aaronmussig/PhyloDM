@@ -9,7 +9,7 @@
     [
       "@semantic-release/exec",
       {
-        "verifyReleaseCmd": "sed -i 's/^version = .*$/version = \"${nextRelease.version}\"/g' Cargo.toml"
+        "verifyReleaseCmd": "./version.sh ${nextRelease.version}"
       }
     ],
     [
@@ -23,7 +23,8 @@
       {
         "assets": [
           "CHANGELOG.md",
-          "Cargo.toml"
+          "Cargo.toml",
+          "CITATION.cff"
         ],
         "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }

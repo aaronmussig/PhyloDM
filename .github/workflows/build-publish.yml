@@ -15,13 +15,12 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - uses: actions-rs/cargo@v1
+      - run: cargo build --release --all-features
+      - uses: actions/upload-artifact@v3
         with:
-          command: build
-          args: --release --all-features
-      - uses: actions-rs/cargo@v1
-        with:
-          command: publish
+          name: cargo
+          path: target/
+          retention-days: 1
 
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
@@ -38,7 +37,8 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          path: ./wheelhouse/*.whl
+          name: pypi
+          path: wheelhouse/*.whl
           retention-days: 1
 
   build_sdist:
@@ -52,20 +52,38 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
+          name: pypi
           path: dist/*.tar.gz
           retention-days: 1
 
   upload_pypi:
-    needs: [build_wheels, build_sdist]
+    needs: [build_wheels, build_sdist, build_and_test_rust]
     runs-on: ubuntu-latest
     if: github.event_name == 'release' && github.event.action == 'published'
     steps:
       - uses: actions/download-artifact@v3
         with:
-          name: artifact
+          name: pypi
           path: dist
 
       - uses: pypa/gh-action-pypi-publish@v1.4.2
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
+
+  upload_crates:
+    needs: [build_wheels, build_sdist, build_and_test_rust]
+    name: Publish to crates.io
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: cargo
+          path: target
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - run: cargo publish --token ${CRATES_TOKEN}
+        env:
+          CRATES_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
