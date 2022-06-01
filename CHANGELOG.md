@@ -1,3 +1,10 @@
+## [2.0.4](https://github.com/aaronmussig/PhyloDM/compare/v2.0.3...v2.0.4) (2022-06-01)
+
+
+### Bug Fixes
+
+* **rust:** Updated to publish to cargo. ([ef32146](https://github.com/aaronmussig/PhyloDM/commit/ef32146be61c94c23bcabbf5f03f6e9794f60b77))
+
 ## [2.0.3](https://github.com/aaronmussig/PhyloDM/compare/v2.0.2...v2.0.3) (2022-05-31)
 
 
