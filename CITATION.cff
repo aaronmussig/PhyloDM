@@ -6,7 +6,7 @@ authors:
   given-names: "Aaron J."
   orcid: "https://orcid.org/0000-0002-9988-0866"
 title: "PhyloDM"
-version: 2.0.4
+version: 2.0.5
 doi: 10.5281/zenodo.3998716
 url: "https://github.com/aaronmussig/PhyloDM"
 date-released: 2022-06-01

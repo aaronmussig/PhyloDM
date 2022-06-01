@@ -1,3 +1,10 @@
+## [2.0.5](https://github.com/aaronmussig/PhyloDM/compare/v2.0.4...v2.0.5) (2022-06-01)
+
+
+### Bug Fixes
+
+* **setup.py:** Fix unicode for setuptools. ([7912966](https://github.com/aaronmussig/PhyloDM/commit/7912966c75c665938daad6d93c2168a75e793138))
+
 ## [2.0.4](https://github.com/aaronmussig/PhyloDM/compare/v2.0.3...v2.0.4) (2022-06-01)
 
 
