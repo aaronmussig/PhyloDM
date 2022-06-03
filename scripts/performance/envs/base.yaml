@@ -1,0 +1,10 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.10
+  - dendropy=4.5.2
+  - typer=0.4.1
+  - pandas=1.4.2
+  - matplotlib-base=3.5.2
+  - phylodm=2.0.5

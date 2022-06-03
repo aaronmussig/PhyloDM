@@ -105,16 +105,13 @@ by the sum of all edges in the tree.
 
 
 ## ⏱ Performance
-Tests were executed using the `scripts/phylodm_perf.py` script with 10 trials.
+Tests were executed using `scripts/performance/Snakefile` on an Intel(R) Xeon(R) CPU E5-2650 v3 @ 2.30GHz.
 
-These tests demonstrate that PhyloDM is more efficient than DendroPy's
-phylogenetic distance matrix when there are over 500 taxa in the tree. If there
-are less than 500 taxa, then use DendroPy for all of the great 
-features it provides. 
+For large numbers of taxa it is beneficial to use PhyloDM, however, if you have a small number 
+of taxa in the tree it is beneficial to use DendroPy for the great features it provides.
 
-With 10,000 taxa in the tree, each program uses approximately:
-* PhyloDM = 4 seconds / 40 MB memory
-* DendroPy = 17 minutes / 22 GB memory
+Using PhyloDM for a large number of taxa, you can expect to use:
+* Memory (GB) = `1.4863970739600885e-08 x^2 + 1.730990617342909e-06 x + 0.014523447553823836`
+* Time (minutes) = `9.496032656158468e-10 x^2 + -3.7621666288523445e-06 x + 0.012201564275114034`
 
-![DendroPy vs. PhyloDM PDM Construction Time](https://raw.githubusercontent.com/aaronmussig/PhyloDM/main/docs/img/dendropy_vs_phylodm_time.png)
-![DendroPy vs. PhyloDM PDM Maximum Memory Usage](https://raw.githubusercontent.com/aaronmussig/PhyloDM/main/docs/img/denropy_vs_phylodm_memory.png)
+![PhyloDM vs DendroPy resource usage](https://raw.githubusercontent.com/aaronmussig/PhyloDM/main/docs/img/performance.png)

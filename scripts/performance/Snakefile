@@ -1,0 +1,77 @@
+N_TAXA = list()
+for n in range(10, 100, 10):
+    N_TAXA.append(n)
+for n in range(100, 1000, 100):
+    N_TAXA.append(n)
+for n in range(1000, 15000, 1000):
+    N_TAXA.append(n)
+for n in range(15000,30000,5000):
+    N_TAXA.append(n)
+N_TAXA.append(30000)
+
+TRIALS = range(5)
+
+rule generate_tree:
+    output:
+        path="output/tree/{n_taxa}.tree"
+    conda:
+        "envs/base.yaml"
+    shell:
+        "python scripts/generate_tree.py {wildcards.n_taxa} {output.path}"
+
+rule run_phylodm:
+    input:
+        path="output/tree/{n_taxa}.tree"
+    output:
+        path="output/phylodm/{n_taxa}_{trial}.txt"
+    conda:
+        "envs/base.yaml"
+    shell:
+        "python scripts/monitor_run.py scripts/run_phylodm.py {input.path} {output.path}"
+
+rule run_dendropy:
+    input:
+        path="output/tree/{n_taxa}.tree"
+    output:
+        path="output/dendropy/{n_taxa}_{trial}.txt"
+    conda:
+        "envs/base.yaml"
+    shell:
+        "python scripts/monitor_run.py scripts/run_dendropy.py {input.path} {output.path}"
+
+rule load_dendropy:
+    input:
+        path="output/tree/{n_taxa}.tree"
+    output:
+        path="output/loading/{n_taxa}_{trial}.txt"
+    conda:
+        "envs/base.yaml"
+    shell:
+        "python scripts/monitor_run.py scripts/load_dendropy.py {input.path} {output.path}"
+
+
+
+rule aggregate_results:
+    input:
+        phylodm=expand("output/phylodm/{n_taxa}_{trial}.txt", n_taxa=N_TAXA, trial=TRIALS),
+        dendropy=expand("output/dendropy/{n_taxa}_{trial}.txt", n_taxa=N_TAXA, trial=TRIALS),
+        loading=expand("output/loading/{n_taxa}_{trial}.txt", n_taxa=N_TAXA, trial=TRIALS),
+    output:
+        path="output/results.tsv"
+    conda:
+        "envs/base.yaml"
+    shell:
+        "python scripts/aggregate.py output/dendropy output/phylodm output/loading {output.path}"
+
+rule plot:
+    conda:
+        "envs/base.yaml"
+    input:
+        results="output/results.tsv"
+    output:
+        plot="output/plot.png"
+    shell:
+        "python scripts/plot.py {input.results} {output.plot}"
+
+
+# snakemake --use-conda -c1 plot
