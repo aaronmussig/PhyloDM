@@ -7,7 +7,10 @@ use derive_more::Sum;
 pub struct NodeId(pub usize);
 
 #[derive(Debug, Default, Add, Copy, Clone, Sum)]
-pub struct BranchLength(pub f64);
+pub struct Edge(pub f64);
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Hash, Add, Ord, PartialOrd)]
-pub struct NodeDepth(pub u32);
+pub struct NodeDepth(pub usize);
+
+#[derive(Debug, Eq, PartialEq, Hash, Clone, Ord, PartialOrd)]
+pub struct Taxon(pub String);

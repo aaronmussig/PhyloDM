@@ -1,3 +1,5 @@
+
+
 import os
 import tempfile
 import unittest
@@ -5,8 +7,6 @@ import unittest
 import dendropy
 import numpy as np
 from dendropy.simulate import treesim
-
-from phylodm import PhyloDM
 
 
 def add_trifurication(tree):
@@ -67,6 +67,31 @@ def get_test_tree(n: int, trifurication=False) -> dict:
             'pd_mat_norm': pd_mat_norm,
             'nd_mat': nd_mat,
             'nd_mat_norm': nd_mat_norm}
+
+def main():
+    N = 10
+
+    test_tree = get_test_tree(N, trifurication=False)
+
+    print(test_tree['tree'].as_string(schema='newick'))
+    print(test_tree['taxa'])
+
+    for i in range(N):
+        for j in range(i+1):
+            cur_val = test_tree['pd_mat'][i, j]
+            print(f'assert_eq!(arr[[{i}, {j}]], {cur_val});')
+
+    print('---')
+
+    for i in range(N):
+        for j in range(i+1):
+            cur_val = test_tree['pd_mat_norm'][i, j]
+            print(f'assert_eq!(arr[[{i}, {j}]], {cur_val});')
+
+    return
+
+if __name__ == '__main__':
+    main()
 
 
 class TestPhyloDM(unittest.TestCase):
