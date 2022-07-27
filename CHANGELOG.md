@@ -1,3 +1,10 @@
+## [2.1.1](https://github.com/aaronmussig/PhyloDM/compare/v2.1.0...v2.1.1) (2022-07-27)
+
+
+### Bug Fixes
+
+* **python:** Order taxa before calculating distance matrix for reproducibility. ([8dc8d29](https://github.com/aaronmussig/PhyloDM/commit/8dc8d2991fb4998170e609d4e37a82d46459dcef))
+
 # [2.1.0](https://github.com/aaronmussig/PhyloDM/compare/v2.0.5...v2.1.0) (2022-07-27)
 
 
