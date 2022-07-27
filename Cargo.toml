@@ -12,14 +12,15 @@ license = "GPL-3.0"
 crate-type=["cdylib", "rlib"]
 
 [features]
-python = ["pyo3/extension-module"]
+python = ["pyo3", "numpy"]
 
 [dependencies]
 light_phylogeny = "1.4"
 derive_more = "0.99"
 itertools = "0.10"
 pyo3 = { version = "0.16", features = ["extension-module"], optional=true }
-numpy = "0.16"
+numpy = {version="0.16", optional=true}
+ndarray = "0.15.4"
 
 [profile.release]
 lto = true
