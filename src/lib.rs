@@ -1,12 +1,9 @@
-#![crate_name = "phylodm"]
+mod pdm;
+pub use self::pdm::PDM;
 
-// #[cfg(any(feature = "python"))]
-// extern crate pyo3;
-
-#[cfg(any(feature = "python"))]
+#[cfg(feature = "python")]
 pub mod python;
 
-pub mod tree;
-pub mod node;
-pub mod types;
 pub mod util;
+
+pub mod tree;

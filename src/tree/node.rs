@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 
-use crate::types::{Edge, NodeDepth, NodeId, Taxon};
+use crate::tree::{Edge, NodeDepth, NodeId, Taxon};
 
-#[derive(Debug)]
-pub struct Node
-{
+/// A node in the tree.
+#[derive(Default)]
+pub struct Node {
     pub id: NodeId,
     pub taxon: Option<Taxon>,
     pub parent: Option<NodeId>,
@@ -29,9 +29,7 @@ impl Hash for Node {
     }
 }
 
-
-impl Node
-{
+impl Node {
     #[must_use]
     pub fn new(id: NodeId, taxon: Option<Taxon>) -> Self {
         Self {
@@ -74,13 +72,14 @@ impl Node
     }
 
     /// Check if this is a leaf node (i.e. no children).
+    #[must_use]
     pub fn is_leaf(&self) -> bool {
         self.children.is_empty()
     }
 
     /// Check if this is a root node (i.e. no parents).
+    #[must_use]
     pub fn is_root(&self) -> bool {
         self.parent.is_none()
     }
 }
-

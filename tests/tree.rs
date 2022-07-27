@@ -1,25 +1,22 @@
 #[cfg(test)]
 mod tests {
-    use phylodm::tree::ArenaTree;
-    use phylodm::types::Taxon;
-
-    use super::*;
+    use phylodm::tree::Taxon;
+    use phylodm::PDM;
 
     #[test]
     fn test_tree_dm_twice() {
-        let mut tree = ArenaTree::default();
+        let mut tree = PDM::default();
         tree.load_from_newick_path("/Users/aaron/git/PhyloDM/scripts/generate_test_data/test.tree");
-        let arr = tree.dm(false);
-        let arr2 = tree.dm(false);
+        let arr = tree.matrix(false);
+        let arr2 = tree.matrix(false);
         assert_eq!(arr, arr2);
     }
 
-
     #[test]
     fn test_tree() {
-        let mut tree = ArenaTree::default();
+        let mut tree = PDM::default();
         tree.load_from_newick_path("/Users/aaron/git/PhyloDM/scripts/generate_test_data/test.tree");
-        let arr = tree.dm(false);
+        let (_, arr) = tree.matrix(false);
 
         assert_eq!(arr[[0, 0]], 0.0);
         assert_eq!(arr[[1, 0]], 84.0);
@@ -77,27 +74,28 @@ mod tests {
         assert_eq!(arr[[9, 8]], 18.0);
         assert_eq!(arr[[9, 9]], 0.0);
 
-        assert_eq!(tree.leaf_nodes(), [
-            Taxon("T1".to_string()),
-            Taxon("T10".to_string()),
-            Taxon("T2".to_string()),
-            Taxon("T3".to_string()),
-            Taxon("T4".to_string()),
-            Taxon("T5".to_string()),
-            Taxon("T6".to_string()),
-            Taxon("T7".to_string()),
-            Taxon("T8".to_string()),
-            Taxon("T9".to_string())
-        ]);
-
-        println!("Length: {:?}", tree.length());
+        assert_eq!(
+            tree.leaf_nodes(),
+            [
+                Taxon("T1".to_string()),
+                Taxon("T10".to_string()),
+                Taxon("T2".to_string()),
+                Taxon("T3".to_string()),
+                Taxon("T4".to_string()),
+                Taxon("T5".to_string()),
+                Taxon("T6".to_string()),
+                Taxon("T7".to_string()),
+                Taxon("T8".to_string()),
+                Taxon("T9".to_string())
+            ]
+        );
     }
 
     #[test]
     fn test_tree_norm() {
-        let mut tree = ArenaTree::default();
+        let mut tree = PDM::default();
         tree.load_from_newick_path("/Users/aaron/git/PhyloDM/scripts/generate_test_data/test.tree");
-        let arr = tree.dm(true);
+        let (_, arr) = tree.matrix(true);
 
         assert_eq!(arr[[0, 0]], 0.0);
         assert_eq!(arr[[1, 0]], 0.49122807017543857);
@@ -155,20 +153,20 @@ mod tests {
         assert_eq!(arr[[9, 8]], 0.10526315789473684);
         assert_eq!(arr[[9, 9]], 0.0);
 
-        assert_eq!(tree.leaf_nodes(), [
-            Taxon("T1".to_string()),
-            Taxon("T10".to_string()),
-            Taxon("T2".to_string()),
-            Taxon("T3".to_string()),
-            Taxon("T4".to_string()),
-            Taxon("T5".to_string()),
-            Taxon("T6".to_string()),
-            Taxon("T7".to_string()),
-            Taxon("T8".to_string()),
-            Taxon("T9".to_string())
-        ]);
-
-        println!("Length: {:?}", tree.length());
-        println!("Norm: true");
+        assert_eq!(
+            tree.leaf_nodes(),
+            [
+                Taxon("T1".to_string()),
+                Taxon("T10".to_string()),
+                Taxon("T2".to_string()),
+                Taxon("T3".to_string()),
+                Taxon("T4".to_string()),
+                Taxon("T5".to_string()),
+                Taxon("T6".to_string()),
+                Taxon("T7".to_string()),
+                Taxon("T8".to_string()),
+                Taxon("T9".to_string())
+            ]
+        );
     }
 }
