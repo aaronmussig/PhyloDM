@@ -359,6 +359,8 @@ impl PDM {
     /// # Arguments
     /// * `norm` - True if the result should be normalized by the sum of all branches in the tree.
     pub fn matrix(&mut self, norm: bool) -> (Vec<Taxon>, Array2<f64>) {
+        // For reproducibility, order the taxa
+        self.order_leaf_node_idx();
         self.compute_row_vec();
 
         let mut array = row_vec_to_symmat(self.row_vec.as_ref().unwrap());
