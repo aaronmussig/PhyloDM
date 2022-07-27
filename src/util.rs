@@ -76,7 +76,7 @@ fn test_row_vec_size_from_mat_size() {
 ///
 /// ```
 /// use phylodm::util::create_row_vec_from_mat_dims;
-/// assert_eq!(create_row_vec_from_mat_dims(3), [0.0. 0.0, 0.0, 0.0, 0.0, 0.0]);
+/// assert_eq!(create_row_vec_from_mat_dims(3), vec![0.0; 6]);
 /// ```
 #[must_use]
 pub fn create_row_vec_from_mat_dims(size: usize) -> Vec<f64> {

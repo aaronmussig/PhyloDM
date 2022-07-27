@@ -26,8 +26,8 @@ conda install -c b bioconda phylodm
 
 ### PyPI (alternative)
 
-Pre-compiled binaries are packaged for most 64-bit platforms running Python 3.9 and 3.10.
-If you are running a different Python version, then you need to have
+Pre-compiled binaries are packaged for most 64-bit Unix platforms. If you are running Python 3.7, 
+or 3.8 then you need to have 
 [Rust](https://www.rust-lang.org/tools/install) installed to compile the binaries. 
 
 ```shell

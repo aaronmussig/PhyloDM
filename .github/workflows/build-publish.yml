@@ -7,16 +7,6 @@ on:
 
 jobs:
 
-  build_and_test_rust:
-    name: Build and test Rust
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-      - run: cargo build --release --all-features
-
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -52,7 +42,7 @@ jobs:
           retention-days: 1
 
   upload_pypi:
-    needs: [build_wheels, build_sdist, build_and_test_rust]
+    needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     if: github.event_name == 'release' && github.event.action == 'published'
     steps:
@@ -67,7 +57,7 @@ jobs:
           password: ${{ secrets.PYPI_TOKEN }}
 
   upload_crates:
-    needs: [build_wheels, build_sdist, build_and_test_rust]
+    needs: [build_wheels, build_sdist]
     name: Publish to crates.io
     runs-on: ubuntu-latest
     steps:

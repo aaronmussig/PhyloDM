@@ -17,9 +17,9 @@ use crate::util::{create_row_vec_from_mat_dims, row_idx_from_mat_coords, row_vec
 /// use phylodm::PDM;
 ///
 /// let mut tree = PDM::default();
-/// tree.load_from_newick_path("/path/to/tree.tree");
+/// tree.load_from_newick_path("examples/example.tree");
 ///
-/// let dm = tree.matrix(true);
+/// let (taxa, dm) = tree.matrix(true);
 /// ```
 #[derive(Default)]
 pub struct PDM {

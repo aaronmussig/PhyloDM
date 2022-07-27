@@ -47,7 +47,7 @@ setup(name='phylodm',
           "Source Code": "https://github.com/aaronmussig/PhyloDM",
       },
       classifiers=[
-          'Development Status :: 4 - Beta',
+          'Development Status :: 5 - Production/Stable',
           'Intended Audience :: Science/Research',
           'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
           'Natural Language :: English',
