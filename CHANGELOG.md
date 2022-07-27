@@ -1,3 +1,15 @@
+# [2.1.0](https://github.com/aaronmussig/PhyloDM/compare/v2.0.5...v2.1.0) (2022-07-27)
+
+
+### Bug Fixes
+
+* **dm:** Fixed calling DM twice panicking. ([0604030](https://github.com/aaronmussig/PhyloDM/commit/0604030517e54e5e9fb0d580d4d13e91068e8b12))
+
+
+### Features
+
+* **rust:** Major refactor of API to be more rust-friendly. ([29fe848](https://github.com/aaronmussig/PhyloDM/commit/29fe848ff9fe08393ea08359fe13336ce9e8af86))
+
 ## [2.0.5](https://github.com/aaronmussig/PhyloDM/compare/v2.0.4...v2.0.5) (2022-06-01)
 
 
