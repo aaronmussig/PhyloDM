@@ -18,7 +18,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --release --all-features
+          args: --release --all-features --verbose
 
   # Run semantic release on main branch
   semantic-release:
