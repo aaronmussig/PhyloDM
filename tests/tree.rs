@@ -6,7 +6,7 @@ mod tests {
     #[test]
     fn test_tree_dm_twice() {
         let mut tree = PDM::default();
-        tree.load_from_newick_path("/Users/aaron/git/PhyloDM/scripts/generate_test_data/test.tree");
+        tree.load_from_newick_path("tests/test.tree");
         let arr = tree.matrix(false);
         let arr2 = tree.matrix(false);
         assert_eq!(arr, arr2);
@@ -15,7 +15,7 @@ mod tests {
     #[test]
     fn test_tree() {
         let mut tree = PDM::default();
-        tree.load_from_newick_path("/Users/aaron/git/PhyloDM/scripts/generate_test_data/test.tree");
+        tree.load_from_newick_path("tests/test.tree");
         let (_, arr) = tree.matrix(false);
 
         assert_eq!(arr[[0, 0]], 0.0);
@@ -94,7 +94,7 @@ mod tests {
     #[test]
     fn test_tree_norm() {
         let mut tree = PDM::default();
-        tree.load_from_newick_path("/Users/aaron/git/PhyloDM/scripts/generate_test_data/test.tree");
+        tree.load_from_newick_path("tests/test.tree");
         let (_, arr) = tree.matrix(true);
 
         assert_eq!(arr[[0, 0]], 0.0);
