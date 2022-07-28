@@ -359,8 +359,6 @@ impl PDM {
     /// # Arguments
     /// * `norm` - True if the result should be normalized by the sum of all branches in the tree.
     pub fn matrix(&mut self, norm: bool) -> (Vec<Taxon>, Array2<f64>) {
-        // For reproducibility, order the taxa
-        self.order_leaf_node_idx();
         self.compute_row_vec();
 
         let mut array = row_vec_to_symmat(self.row_vec.as_ref().unwrap());
@@ -393,13 +391,14 @@ impl PDM {
                 );
             }
         }
-
-        // For reproducibility, order the taxa
-        self.order_leaf_node_idx();
         self.compute_row_vec();
     }
 
-    fn compute_row_vec(&mut self) {
+    /// Computes the row vector. Required if the PDM was manually created (i.e. not from a newick file).
+    pub fn compute_row_vec(&mut self) {
+        // For reproducibility, order the taxa
+        self.order_leaf_node_idx();
+
         // Create the output row matrix
         let num_leaf = self.n_leaf_nodes();
         let mut row_vec = create_row_vec_from_mat_dims(num_leaf);
@@ -432,10 +431,11 @@ impl PDM {
     /// * `a`: - The first taxon.
     /// * `b`: - The second taxon.
     /// * `norm` - True if the result should be normalised by the sum of all branches in the tree.
-    pub fn distance(&mut self, a: &Taxon, b: &Taxon, norm: bool) -> f64 {
-        if self.row_vec.is_none() {
-            self.compute_row_vec();
-        }
+    pub fn distance(&self, a: &Taxon, b: &Taxon, norm: bool) -> f64 {
+        assert!(
+            !self.row_vec.is_none(),
+            "The PDM has not been computed yet, call compute_row_vec() first."
+        );
         let a_idx = self.get_taxon_node_idx(a);
         let b_idx = self.get_taxon_node_idx(b);
         let row_idx = self.get_row_vec_idx_dist_between_leaf_idx(a_idx, b_idx);
