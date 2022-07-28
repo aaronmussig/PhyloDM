@@ -8,11 +8,12 @@
 *Efficient calculation of pairwise phylogenetic distance matrices.*
 
 PhyloDM is a high-performance library that converts a phylogenetic tree into pairwise distance matrix. 
-It is designed to run on use minimal memory (<100 MB), and takes seconds to compute large trees
+It is designed to use minimal memory, and takes less than a minute to compute large trees
 (>20,000 taxa), whereas other libraries may take hours and use hundreds of GB of memory.
 
 PhyloDM is written in Rust and is exposed to Python via the Python PyO3 API. This means it 
-can be used in either Python or Rust, however, the documentation is written for use in Python.
+can be used in either Python or Rust, however, the documentation below is written for use in Python. For 
+Rust documentation, see [Crates.io](https://docs.rs/phylodm/latest/phylodm/).
 
 ## ⚙ Installation
 

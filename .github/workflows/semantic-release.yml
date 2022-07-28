@@ -15,7 +15,10 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - run: cargo test --release --all-features
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --release --all-features
 
   # Run semantic release on main branch
   semantic-release:
