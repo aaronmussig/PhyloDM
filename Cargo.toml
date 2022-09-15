@@ -9,18 +9,15 @@ repository = "https://github.com/aaronmussig/PhyloDM"
 license = "GPL-3.0"
 
 [lib]
-crate-type=["cdylib", "rlib"]
+crate-type = ["cdylib", "rlib"]
 
 [features]
 python = ["pyo3", "numpy"]
 
 [dependencies]
-light_phylogeny = "1.4"
+light_phylogeny = "2.1.2"
 derive_more = "0.99"
 itertools = "0.10"
-pyo3 = { version = "0.16", features = ["extension-module"], optional=true }
-numpy = {version="0.16", optional=true}
+pyo3 = { version = "0.17.1", features = ["extension-module"], optional = true }
+numpy = { version = "0.17.1", optional = true }
 ndarray = "0.15.4"
-
-[profile.release]
-lto = true
