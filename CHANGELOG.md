@@ -1,3 +1,10 @@
+## [2.1.2](https://github.com/aaronmussig/PhyloDM/compare/v2.1.1...v2.1.2) (2022-07-28)
+
+
+### Bug Fixes
+
+* **pdm:** Make distance a non-mutable call. ([ebef8e7](https://github.com/aaronmussig/PhyloDM/commit/ebef8e7979666f9d921ffb9641f5f929b4be3da6))
+
 ## [2.1.1](https://github.com/aaronmussig/PhyloDM/compare/v2.1.0...v2.1.1) (2022-07-27)
 
 
