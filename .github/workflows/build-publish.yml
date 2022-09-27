@@ -56,6 +56,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: semantic-release
       - uses: pypa/cibuildwheel@v2.10.0
         env:
           CIBW_BUILD: ${{matrix.pyver}}-*
@@ -72,6 +75,9 @@ jobs:
     if: needs.semantic_release_next_version.outputs.version != ''
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: semantic-release
       - name: Build sdist
         run: pipx run build --sdist
       - uses: actions/upload-artifact@v3
@@ -124,7 +130,7 @@ jobs:
           name: pypi
           path: dist
 
-      - uses: pypa/gh-action-pypi-publish@v1.5
+      - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
@@ -135,6 +141,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: semantic-release
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
