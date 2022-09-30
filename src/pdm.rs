@@ -39,8 +39,9 @@ impl PDM {
     }
 
     /// Return all leaf nodes in the tree.
+    #[must_use]
     pub fn leaf_nodes(&self) -> Vec<Taxon> {
-        let mut out = Vec::new();
+        let mut out = Vec::with_capacity(self.row_idx_to_leaf_idx.len());
         for leaf_idx in self.row_idx_to_leaf_idx.iter() {
             let leaf = self.get_node(*leaf_idx);
             out.push(leaf.taxon.clone().unwrap());
@@ -57,13 +58,14 @@ impl PDM {
             .sum()
     }
 
-    /// Returns a vector of pointers to nodes at a specific depth. Panics if depth doesn't exist.
+    /// Returns a vector of node indices at a specific depth. Panics if depth doesn't exist.
+    #[must_use]
     fn get_node_idxs_at_depth(&self, depth: NodeDepth) -> Vec<NodeId> {
         let nodes_at_depth = match self.nodes_at_depth.get(&depth) {
             Some(node_ids) => node_ids,
             None => panic!("No nodes at depth: {:?}", depth),
         };
-        let mut nodes: Vec<NodeId> = vec![];
+        let mut nodes: Vec<NodeId> = Vec::with_capacity(nodes_at_depth.len());
         for node_id in nodes_at_depth.iter() {
             nodes.push(*node_id);
         }
@@ -77,11 +79,13 @@ impl PDM {
     }
 
     /// Returns the row vector index for a given leaf node id.
+    #[must_use]
     fn get_row_vec_idx_from_leaf_idx(&self, leaf_id: NodeId) -> usize {
-        *self.leaf_idx_to_row_idx.get(&leaf_id).unwrap()
+        self.leaf_idx_to_row_idx.get(&leaf_id).unwrap().to_owned()
     }
 
     /// Get the row vector index for two taxa in the tree.
+    #[must_use]
     fn get_row_vec_idx_dist_between_leaf_idx(&self, i: NodeId, j: NodeId) -> usize {
         let n_taxa = self.n_leaf_nodes();
         let i_idx = self.get_row_vec_idx_from_leaf_idx(i);
@@ -93,9 +97,8 @@ impl PDM {
     /// Returns the ID of the new node.
     fn add_leaf_node(&mut self, taxon: Taxon) -> NodeId {
         // Panic if the taxon is already in the tree.
-        if self.taxon_to_node_id.contains_key(&taxon) {
-            panic!("Taxon already exists in the tree: '{:?}'", taxon);
-        }
+        assert!(!self.taxon_to_node_id.contains_key(&taxon),
+                "Taxon already exists in the tree: '{:?}'", taxon);
 
         // Create the new node, and place it in the tree.
         let node_id = NodeId(self.n_nodes());
@@ -103,7 +106,7 @@ impl PDM {
         self.leaf_idx_to_row_idx
             .insert(node_id, self.leaf_idx_to_row_idx.len());
         self.row_idx_to_leaf_idx.push(node_id);
-        self.nodes.push(Node::new(node_id, Some(taxon.clone())));
+        self.nodes.push(Node::new(node_id, Some(taxon)));
         return self.nodes.last().unwrap().id;
     }
 
@@ -130,6 +133,7 @@ impl PDM {
     }
 
     /// Retrieve a mutable node from the tree.
+    #[must_use]
     fn get_node_mut(&mut self, node_id: NodeId) -> &mut Node {
         &mut self.nodes[node_id.0]
     }
@@ -153,22 +157,19 @@ impl PDM {
         let mut root = None;
         self.nodes.iter().for_each(|node| {
             if node.is_root() {
-                if root.is_some() {
-                    panic!("Multiple root nodes detected!");
-                }
+                assert!(root.is_none(), "Multiple root nodes detected!");
                 root = Some(node.id);
             }
         });
 
         // Panic if no root node could be found.
-        if root.is_none() {
-            panic!("No root node found!");
-        }
+        assert!(root.is_some(), "No root node found!");
 
         // Set the depth of all nodes
         self.set_node_depth_dfs(root.unwrap());
     }
 
+    /// Set the depth of all nodes using a depth first search.
     fn set_node_depth_dfs(&mut self, root_id: NodeId) {
         let mut nodes_at_depth: HashMap<NodeDepth, Vec<NodeId>> = HashMap::new();
 
@@ -188,8 +189,8 @@ impl PDM {
                 .push(node.id);
 
             // Add the children to the stack
-            node.children.iter().copied().for_each(|child_id| {
-                stack.push((child_id, depth + NodeDepth(1)));
+            node.children.iter().for_each(|child_id|  {
+                stack.push((*child_id, depth + NodeDepth(1)));
             });
         }
 
@@ -217,7 +218,6 @@ impl PDM {
 
         // Save the hashmap
         self.nodes_at_depth = nodes_at_depth;
-        // self.nodes_at_depth = nodes_at_depth;
     }
 
     /// Wrapper method to calculate the pairwise distances at a given depth.
@@ -237,8 +237,8 @@ impl PDM {
                     if child_node.desc_distances.is_some() {
                         let mut new_desc_distances =
                             child_node.desc_distances.as_ref().unwrap().clone();
-                        for (_k, v) in new_desc_distances.iter_mut() {
-                            *v = *v + node.parent_distance.unwrap_or(Edge(0.0));
+                        for edge in new_desc_distances.values_mut() {
+                            *edge = *edge + node.parent_distance.unwrap_or(Edge(0.0));
                         }
                         self.get_node_mut(node_id)
                             .set_desc_distances(&Some(new_desc_distances));
@@ -315,8 +315,8 @@ impl PDM {
                 let child_j_desc_distances = child_j_node.desc_distances.as_ref().unwrap();
 
                 // Calculate the pairwise distances between these nodes.
-                for (child_i_node_id, child_i_dist) in child_i_desc_distances.iter() {
-                    for (child_j_node_id, child_j_dist) in child_j_desc_distances.iter() {
+                for (child_i_node_id, child_i_dist) in child_i_desc_distances {
+                    for (child_j_node_id, child_j_dist) in child_j_desc_distances {
                         // Find the corresponding row vector index to store this comparison
                         let row_idx = self.get_row_vec_idx_dist_between_leaf_idx(
                             *child_i_node_id,

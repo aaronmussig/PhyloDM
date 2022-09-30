@@ -80,7 +80,7 @@ fn test_row_vec_size_from_mat_size() {
 /// ```
 #[must_use]
 pub fn create_row_vec_from_mat_dims(size: usize) -> Vec<f64> {
-    return vec![0.0; row_vec_size_from_mat_size(size)];
+    vec![0.0; row_vec_size_from_mat_size(size)]
 }
 
 #[test]
@@ -130,6 +130,7 @@ fn test_mat_size_from_row_vec_size() {
 /// use phylodm::util::row_vec_to_symmat;
 /// row_vec_to_symmat(&vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0]);
 /// ```
+#[must_use]
 pub fn row_vec_to_symmat(row_vec: &[f64]) -> Array2<f64> {
     let num_leaf = mat_size_from_row_vec_size(row_vec.len());
     let mut array = Array2::<f64>::zeros([num_leaf, num_leaf]);
