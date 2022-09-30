@@ -1,13 +1,12 @@
 use numpy::{PyArray2, ToPyArray};
-use pyo3::prelude::*;
-use pyo3::{pymodule, types::PyModule, PyResult, Python};
+use pyo3::{Py, pyclass, pymethods, pymodule, PyResult, Python, types::PyModule};
 
-use crate::pdm::PDM as Tree;
+use crate::pdm::PDM as RustPhyloDM;
 use crate::tree::{Edge, NodeId, Taxon};
 
 #[pyclass]
 struct PhyloDM {
-    tree: Tree,
+    tree: RustPhyloDM,
 }
 
 #[pymethods]
@@ -15,7 +14,7 @@ impl PhyloDM {
     #[new]
     fn new() -> Self {
         Self {
-            tree: Tree::default(),
+            tree: RustPhyloDM::default(),
         }
     }
 
@@ -23,17 +22,20 @@ impl PhyloDM {
         self.tree.load_from_newick_path(path);
     }
 
-    pub fn add_node(&mut self, taxon: Option<String>) -> usize {
+    pub fn add_node(&mut self, taxon: Option<&str>) -> usize {
         match taxon {
-            Some(taxon) => self.tree.add_node(Some(Taxon(taxon))),
+            Some(taxon) => self.tree.add_node(Some(Taxon(taxon.to_string()))),
             None => self.tree.add_node(None),
         }
-        .0
+            .0
     }
 
     pub fn add_edge(&mut self, parent_id: usize, child_id: usize, length: f64) {
-        self.tree
-            .add_edge(NodeId(parent_id), NodeId(child_id), Edge(length));
+        self.tree.add_edge(
+            NodeId(parent_id),
+            NodeId(child_id),
+            Edge(length),
+        );
     }
 
     pub fn get_nodes(&self) -> Vec<usize> {
