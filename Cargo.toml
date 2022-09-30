@@ -15,9 +15,9 @@ crate-type = ["cdylib", "rlib"]
 python = ["pyo3", "numpy"]
 
 [dependencies]
-light_phylogeny = "2.1.2"
+light_phylogeny = "2.1"
 derive_more = "0.99"
 itertools = "0.10"
-pyo3 = { version = "0.17.1", features = ["extension-module"], optional = true }
-numpy = { version = "0.17.1", optional = true }
-ndarray = "0.15.4"
+pyo3 = { version = "0.17", features = ["extension-module"], optional = true }
+numpy = { version = "0.17", optional = true }
+ndarray = "0.15"
