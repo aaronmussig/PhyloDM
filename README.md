@@ -1,39 +1,40 @@
 # 🌲 PhyloDM
 
-[![PyPI](https://img.shields.io/pypi/v/phylodm)](https://pypi.org/project/phylodm/)
-[![BioConda](https://img.shields.io/conda/vn/bioconda/phylodm?color=green)](https://anaconda.org/bioconda/phylodm)
+[![PyPI](https://img.shields.io/pypi/v/phylodm?color=yellow)](https://pypi.org/project/phylodm/)
+[![BioConda](https://img.shields.io/conda/vn/bioconda/phylodm?color=43b02a)](https://anaconda.org/bioconda/phylodm)
 [![Crates](https://img.shields.io/crates/v/phylodm?color=orange)](https://crates.io/crates/phylodm)
 [![DOI](https://zenodo.org/badge/251473194.svg)](https://zenodo.org/badge/latestdoi/251473194)
 
-*Efficient calculation of pairwise phylogenetic distance matrices.*
 
-PhyloDM is a high-performance library that converts a phylogenetic tree into pairwise distance matrix. 
-It is designed to use minimal memory, and takes less than a minute to compute large trees
-(>20,000 taxa), whereas other libraries may take hours and use hundreds of GB of memory.
+PhyloDM is a high-performance library that converts a phylogenetic tree into a pairwise distance matrix. 
+
+For a tree with 30,000 taxa, PhyloDM will use:
+
+* ~14GB of memory (94% less than DendroPy)
+* ~1 minute of CPU time (183x faster than DendroPy).
 
 PhyloDM is written in Rust and is exposed to Python via the Python PyO3 API. This means it 
-can be used in either Python or Rust, however, the documentation below is written for use in Python. For 
-Rust documentation, see [Crates.io](https://docs.rs/phylodm/latest/phylodm/).
+can be used in either Python or Rust, however, the documentation below is written for use in Python. For Rust documentation, see [Crates.io](https://docs.rs/phylodm/latest/phylodm/).
 
 ## ⚙ Installation
 
 *Requires Python 3.7+*
 
-### Conda (recommended)
+### PyPI
+
+Pre-compiled binaries are packaged for most 64-bit Unix platforms. If you are installing on a different platform then you
+will need to have [Rust](https://www.rust-lang.org/tools/install) installed to compile the binaries. 
+
+```shell
+python -m pip install phylodm
+```
+
+### Conda
 
 ```shell
 conda install -c b bioconda phylodm
 ```
 
-### PyPI (alternative)
-
-Pre-compiled binaries are packaged for most 64-bit Unix platforms. If you are running Python 3.7, 
-or 3.8 then you need to have 
-[Rust](https://www.rust-lang.org/tools/install) installed to compile the binaries. 
-
-```shell
-python -m pip install phylodm
-```
 
 ## 🐍 Quick-start
 
@@ -111,8 +112,6 @@ Tests were executed using `scripts/performance/Snakefile` on an Intel(R) Xeon(R)
 For large numbers of taxa it is beneficial to use PhyloDM, however, if you have a small number 
 of taxa in the tree it is beneficial to use DendroPy for the great features it provides.
 
-Using PhyloDM for a large number of taxa `x`, you can expect to use:
-* Memory (GB) = `1.4967e-8 x^2`
-* Time (minutes) = `8.1573e-10 x^2`
+
 
 ![PhyloDM vs DendroPy resource usage](https://raw.githubusercontent.com/aaronmussig/PhyloDM/main/docs/img/performance.svg)

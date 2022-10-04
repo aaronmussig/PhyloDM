@@ -1,8 +1,8 @@
+import matplotlib.patheffects as PathEffects
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import typer
-import matplotlib.patheffects as PathEffects
 from scipy.optimize import curve_fit
 
 plt.rcParams['font.sans-serif'] = "Arial"
@@ -19,20 +19,22 @@ def plot_joint_axis(path_results, path_out):
     df_phylodm = df[df['source'] == 'phylodm']
     df_loading = df[df['source'] == 'loading']
 
-    phylodm_cpu = df_phylodm[['n_taxa', 'tot_min']].groupby("n_taxa").median()
-    dendropy_cpu = df_dendro[['n_taxa', 'tot_min']].groupby("n_taxa").median()
     loading_cpu = df_loading[['n_taxa', 'tot_min']].groupby("n_taxa").median()
-
-    phylodm_mem = df_phylodm[['n_taxa', 'max_mem_gb']].groupby("n_taxa").median()
-    dendropy_mem = df_dendro[['n_taxa', 'max_mem_gb']].groupby("n_taxa").median()
     loading_mem = df_loading[['n_taxa', 'max_mem_gb']].groupby("n_taxa").median()
 
-    t = list(phylodm_cpu.index)
-    phylodm_cpu_vals = [float(max(0, x)) for x in phylodm_cpu['tot_min'].values - loading_cpu['tot_min'].values]
-    dendropy_cpu_vals = [float(max(0, x)) for x in dendropy_cpu['tot_min'].values - loading_cpu['tot_min'].values]
+    d_loading_cpu_mins = loading_cpu['tot_min'].to_dict()
+    d_loading_mem_gb = loading_mem['max_mem_gb'].to_dict()
 
-    phylodm_mem_vals = [float(max(0, x)) for x in phylodm_mem['max_mem_gb'].values - loading_mem['max_mem_gb'].values]
-    dendropy_mem_vals = [float(max(0, x)) for x in dendropy_mem['max_mem_gb'].values - loading_mem['max_mem_gb'].values]
+    t = list(map(int, df_phylodm['n_taxa'].values))
+    phylodm_cpu_vals = [max(row['tot_min'] - d_loading_cpu_mins[row['n_taxa']], 0)
+                        for idx, row in df_phylodm[['n_taxa', 'tot_min']].iterrows()]
+    dendropy_cpu_vals = [max(row['tot_min'] - d_loading_cpu_mins[row['n_taxa']], 0)
+                         for idx, row in df_dendro[['n_taxa', 'tot_min']].iterrows()]
+
+    phylodm_mem_vals = [max(row['max_mem_gb'] - d_loading_mem_gb[row['n_taxa']], 0)
+                        for idx, row in df_phylodm[['n_taxa', 'max_mem_gb']].iterrows()]
+    dendropy_mem_vals = [max(row['max_mem_gb'] - d_loading_mem_gb[row['n_taxa']], 0)
+                         for idx, row in df_dendro[['n_taxa', 'max_mem_gb']].iterrows()]
 
     fig, ax1 = plt.subplots(figsize=(8, 6))
 
@@ -56,10 +58,10 @@ def plot_joint_axis(path_results, path_out):
     alpha = 1
 
     xp = np.linspace(1000, 30000, 1000)
-    p1 = ax1.plot(xp, func(xp, *popt_phylo_cpu), '-', color=color_phylo, label='PhyloDM (minutes)')
-    p2 = ax1.plot(xp, func(xp, *popt_phylo_mem), '--', color=color_phylo, label='PhyloDM (GB)')
-    p3 = ax1.plot(xp, func(xp, *popt_dendro_cpu), '-', color=color_dendro, label='DendroPy (minutes)')
-    p4 = ax1.plot(xp, func(xp, *popt_dendro_mem), '--', color=color_dendro, label='DendroPy (GB)')
+    p1 = ax1.plot(xp, func(xp, *popt_phylo_cpu), '-', color=color_phylo, label=f'PhyloDM (minutes) = x\u00b2 {popt_phylo_cpu[0]:.2e}')
+    p2 = ax1.plot(xp, func(xp, *popt_phylo_mem), '--', color=color_phylo, label=f'PhyloDM (GB) = x\u00b2 {popt_phylo_mem[0]:.2e}')
+    p3 = ax1.plot(xp, func(xp, *popt_dendro_cpu), '-', color=color_dendro, label=f'DendroPy (minutes) = x\u00b2 {popt_dendro_cpu[0]:.2e}')
+    p4 = ax1.plot(xp, func(xp, *popt_dendro_mem), '--', color=color_dendro, label=f'DendroPy (GB) = x\u00b2 {popt_dendro_mem[0]:.2e}')
 
     ax1.set_xlabel('n_taxa')
     ax1.set_ylabel('Time (minutes) / Memory (GB)')
@@ -79,34 +81,34 @@ def plot_joint_axis(path_results, path_out):
     font_size = 12
 
     # Set maximum values
-    ax1_phylo_max_y = max(phylodm_cpu_vals)
     ax1_phylo_max_x = max(t)
+    ax1_phylo_max_y = func(ax1_phylo_max_x, popt_phylo_cpu)[0]
     txt = ax1.text(ax1_phylo_max_x, ax1_phylo_max_y, f'{ax1_phylo_max_y * 60:.1f} seconds',
-             fontsize=font_size, color=color_phylo, va='bottom', ha='right')
+                   fontsize=font_size, color=color_phylo, va='bottom', ha='right')
     txt.set_path_effects([PathEffects.withStroke(linewidth=4, foreground='w')])
 
-    ax1_dendro_max_y = max(dendropy_cpu_vals)
     ax1_dendro_max_x = max(t)
+    ax1_dendro_max_y = func(ax1_dendro_max_x, popt_dendro_cpu)[0]
     txt = ax1.text(ax1_dendro_max_x, ax1_dendro_max_y - 50, f'{ax1_dendro_max_y / 60:.1f} hours',
-             fontsize=font_size, color=color_dendro, va='top', ha='right')
+                   fontsize=font_size, color=color_dendro, va='top', ha='right')
     txt.set_path_effects([PathEffects.withStroke(linewidth=4, foreground='w')])
 
     # Set maximum values
-    ax2_phylo_max_y = max(phylodm_mem_vals)
     ax2_phylo_max_x = max(t)
+    ax2_phylo_max_y = func(ax2_phylo_max_x, popt_phylo_mem)[0]
     txt = ax1.text(ax2_phylo_max_x, ax2_phylo_max_y, f'{ax2_phylo_max_y:.1f} GB',
-             fontsize=font_size, color=color_phylo, va='bottom', ha='right')
+                   fontsize=font_size, color=color_phylo, va='bottom', ha='right')
     txt.set_path_effects([PathEffects.withStroke(linewidth=4, foreground='w')])
 
-    ax2_dendro_max_y = max(dendropy_mem_vals)
     ax2_dendro_max_x = max(t)
+    ax2_dendro_max_y = func(ax2_dendro_max_x, popt_dendro_mem)[0]
     txt = ax1.text(ax2_dendro_max_x, ax2_dendro_max_y, f'{ax2_dendro_max_y:.1f} GB',
-             fontsize=font_size, color=color_dendro, va='bottom', ha='right')
+                   fontsize=font_size, color=color_dendro, va='bottom', ha='right')
     txt.set_path_effects([PathEffects.withStroke(linewidth=4, foreground='w')])
 
     # fig.tight_layout()
 
-    plots = p1 + p3 + p2 + p4
+    plots = p1 + p2 + p3 + p4
     labs = [p.get_label() for p in plots]
     ax1.legend(plots, labs, loc=0)
 
@@ -116,8 +118,10 @@ def plot_joint_axis(path_results, path_out):
     # plt.show()
     plt.savefig(path_out)
 
+
 def func(x, a):
-    return x*x * a
+    return x * x * a
+
 
 def print_eqn(x, y):
     cpu_polyfit = np.polyfit(np.log(x), y, 1)
