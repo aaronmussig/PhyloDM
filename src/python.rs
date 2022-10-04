@@ -24,7 +24,7 @@ impl PhyloDM {
 
     pub fn add_node(&mut self, taxon: Option<&str>) -> usize {
         match taxon {
-            Some(taxon) => self.tree.add_node(Some(Taxon(taxon.to_string()))),
+            Some(taxon) => self.tree.add_node(Some(&Taxon(taxon.to_string()))),
             None => self.tree.add_node(None),
         }
             .0

@@ -49,8 +49,6 @@ rule load_dendropy:
     shell:
         "python scripts/monitor_run.py scripts/load_dendropy.py {input.path} {output.path}"
 
-
-
 rule aggregate_results:
     input:
         phylodm=expand("output/phylodm/{n_taxa}_{trial}.txt", n_taxa=N_TAXA, trial=TRIALS),
@@ -69,9 +67,9 @@ rule plot:
     input:
         results="output/results.tsv"
     output:
-        plot="output/plot.png"
+        plot="output/plot.svg"
     shell:
         "python scripts/plot.py {input.results} {output.plot}"
 
-
-# snakemake --use-conda -c1 plot
+# To run the workflow, use the command:
+# snakemake --use-conda --cores 1 plot

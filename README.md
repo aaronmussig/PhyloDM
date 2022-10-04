@@ -111,8 +111,8 @@ Tests were executed using `scripts/performance/Snakefile` on an Intel(R) Xeon(R)
 For large numbers of taxa it is beneficial to use PhyloDM, however, if you have a small number 
 of taxa in the tree it is beneficial to use DendroPy for the great features it provides.
 
-Using PhyloDM for a large number of taxa, you can expect to use:
-* Memory (GB) = `1.4863970739600885e-08 x^2 + 1.730990617342909e-06 x + 0.014523447553823836`
-* Time (minutes) = `9.496032656158468e-10 x^2 + -3.7621666288523445e-06 x + 0.012201564275114034`
+Using PhyloDM for a large number of taxa `x`, you can expect to use:
+* Memory (GB) = `1.4967e-8 x^2`
+* Time (minutes) = `8.1573e-10 x^2`
 
-![PhyloDM vs DendroPy resource usage](https://raw.githubusercontent.com/aaronmussig/PhyloDM/main/docs/img/performance.png)
+![PhyloDM vs DendroPy resource usage](https://raw.githubusercontent.com/aaronmussig/PhyloDM/main/docs/img/performance.svg)
