@@ -5,7 +5,6 @@
 [![Crates](https://img.shields.io/crates/v/phylodm?color=orange)](https://crates.io/crates/phylodm)
 [![DOI](https://zenodo.org/badge/251473194.svg)](https://zenodo.org/badge/latestdoi/251473194)
 
-
 PhyloDM is a high-performance library that converts a phylogenetic tree into a pairwise distance matrix. 
 
 For a tree with 30,000 taxa, PhyloDM will use:
