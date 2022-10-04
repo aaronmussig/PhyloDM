@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
 use itertools::Itertools;
-use light_phylogeny::read_newick;
 use light_phylogeny::ArenaTree as LpTree;
+use light_phylogeny::read_newick;
 use ndarray::Array2;
 
-use crate::tree::Node;
 use crate::tree::{Edge, NodeDepth, NodeId, Taxon};
+use crate::tree::Node;
 use crate::util::{create_row_vec_from_mat_dims, row_idx_from_mat_coords, row_vec_to_symmat};
 
 /// Create and manipulate the Phylogenetic Distance Matrix.
@@ -42,9 +42,9 @@ impl PDM {
     #[must_use]
     pub fn leaf_nodes(&self) -> Vec<Taxon> {
         let mut out = Vec::with_capacity(self.row_idx_to_leaf_idx.len());
-        for leaf_idx in self.row_idx_to_leaf_idx.iter() {
+        for leaf_idx in &self.row_idx_to_leaf_idx {
             let leaf = self.get_node(*leaf_idx);
-            out.push(leaf.taxon.clone().unwrap());
+            out.push(leaf.taxon.clone().expect("Leaf node has no taxon! Please report this error."));
         }
         out
     }
@@ -61,12 +61,9 @@ impl PDM {
     /// Returns a vector of node indices at a specific depth. Panics if depth doesn't exist.
     #[must_use]
     fn get_node_idxs_at_depth(&self, depth: NodeDepth) -> Vec<NodeId> {
-        let nodes_at_depth = match self.nodes_at_depth.get(&depth) {
-            Some(node_ids) => node_ids,
-            None => panic!("No nodes at depth: {:?}", depth),
-        };
+        let nodes_at_depth = self.nodes_at_depth.get(&depth).expect("No nodes at depth!");
         let mut nodes: Vec<NodeId> = Vec::with_capacity(nodes_at_depth.len());
-        for node_id in nodes_at_depth.iter() {
+        for node_id in nodes_at_depth {
             nodes.push(*node_id);
         }
         nodes
@@ -81,7 +78,7 @@ impl PDM {
     /// Returns the row vector index for a given leaf node id.
     #[must_use]
     fn get_row_vec_idx_from_leaf_idx(&self, leaf_id: NodeId) -> usize {
-        self.leaf_idx_to_row_idx.get(&leaf_id).unwrap().to_owned()
+        *self.leaf_idx_to_row_idx.get(&leaf_id).expect("Leaf node not found!")
     }
 
     /// Get the row vector index for two taxa in the tree.
@@ -95,9 +92,9 @@ impl PDM {
 
     /// Add a new leaf node to the tree.
     /// Returns the ID of the new node.
-    fn add_leaf_node(&mut self, taxon: Taxon) -> NodeId {
+    fn add_leaf_node(&mut self, taxon: &Taxon) -> NodeId {
         // Panic if the taxon is already in the tree.
-        assert!(!self.taxon_to_node_id.contains_key(&taxon),
+        assert!(!self.taxon_to_node_id.contains_key(taxon),
                 "Taxon already exists in the tree: '{:?}'", taxon);
 
         // Create the new node, and place it in the tree.
@@ -106,7 +103,7 @@ impl PDM {
         self.leaf_idx_to_row_idx
             .insert(node_id, self.leaf_idx_to_row_idx.len());
         self.row_idx_to_leaf_idx.push(node_id);
-        self.nodes.push(Node::new(node_id, Some(taxon)));
+        self.nodes.push(Node::new(node_id, Some(taxon.clone())));
         return self.nodes.last().unwrap().id;
     }
 
@@ -119,7 +116,7 @@ impl PDM {
 
     /// Add a node to the tree.
     // TODO: Remove this method.
-    pub(crate) fn add_node(&mut self, taxon: Option<Taxon>) -> NodeId {
+    pub(crate) fn add_node(&mut self, taxon: Option<&Taxon>) -> NodeId {
         match taxon {
             Some(t) => self.add_leaf_node(t),
             None => self.add_internal_node(),
@@ -189,16 +186,13 @@ impl PDM {
                 .push(node.id);
 
             // Add the children to the stack
-            node.children.iter().for_each(|child_id|  {
+            node.children.iter().for_each(|child_id| {
                 stack.push((*child_id, depth + NodeDepth(1)));
             });
         }
 
         // Check that the root is the only node at depth 0.
-        let nodes_at_depth_0 = match { nodes_at_depth.get(&NodeDepth(0)) } {
-            Some(nodes) => nodes,
-            None => panic!("Root node not found!"),
-        };
+        let nodes_at_depth_0 = nodes_at_depth.get(&NodeDepth(0)).expect("Root node not found!");
         assert!(
             !(nodes_at_depth_0.len() != 1 && nodes_at_depth_0[0] != root_id),
             "Root node not found!"
@@ -378,7 +372,7 @@ impl PDM {
             if cur_node.name.is_empty() {
                 self.add_node(None);
             } else {
-                self.add_node(Some(Taxon(cur_node.name.clone())));
+                self.add_node(Some(&Taxon(cur_node.name.clone())));
             }
         }
         for cur_node in &lp_tree.arena {
