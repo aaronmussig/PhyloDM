@@ -23,8 +23,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v3
         with:
-          name: Cargo.toml
-          path: Cargo.toml
+          name: semantic-release
+          path: |
+            Cargo.toml
           retention-days: 1
     outputs:
       version: ${{ steps.semantic_release.outputs.version }}
@@ -122,7 +123,7 @@ jobs:
 
   upload_pypi:
     name: Publish to PyPI
-    needs: [test_rust, test_python_dist, build_python_wheels]
+    needs: [semantic_release_publish]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v3
@@ -137,7 +138,7 @@ jobs:
 
   upload_crates:
     name: Publish to crates.io
-    needs: [test_rust, test_python_dist, build_python_wheels]
+    needs: [semantic_release_publish]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
