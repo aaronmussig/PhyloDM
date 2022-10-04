@@ -1,3 +1,10 @@
+## [2.1.3](https://github.com/aaronmussig/PhyloDM/compare/v2.1.2...v2.1.3) (2022-10-04)
+
+
+### Bug Fixes
+
+* **bump:** Version bump to rebuild wheels for py37, py38. ([a6a5ade](https://github.com/aaronmussig/PhyloDM/commit/a6a5ade17ac476286b909d1d0c083db32a4891dc))
+
 ## [2.1.2](https://github.com/aaronmussig/PhyloDM/compare/v2.1.1...v2.1.2) (2022-07-28)
 
 

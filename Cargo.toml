@@ -1,6 +1,6 @@
 [package]
 name = "phylodm"
-version = "2.1.2"
+version = "2.1.3"
 authors = ["Aaron Mussig <aaronmussig@gmail.com>"]
 edition = "2021"
 description = "Efficient calculation of phylogenetic distance matrices."
