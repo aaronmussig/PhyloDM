@@ -21,3 +21,9 @@ itertools = "0.10"
 pyo3 = { version = "0.17", features = ["extension-module"], optional = true }
 numpy = { version = "0.17", optional = true }
 ndarray = "0.15"
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
+strip = true

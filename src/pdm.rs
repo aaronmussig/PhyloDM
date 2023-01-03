@@ -217,39 +217,72 @@ impl PDM {
     /// Wrapper method to calculate the pairwise distances at a given depth.
     fn calculate_distances_at_depth(&mut self, depth: NodeDepth, row_vec: &mut [f64]) {
         // Iterate over all nodes a this depth
-        self.get_node_idxs_at_depth(depth)
-            .into_iter()
-            .for_each(|node_id| {
-                let node = self.get_node(node_id);
 
-                // This is a leaf node, set the child distances to 0
-                if node.is_leaf() {
-                    self.get_node_mut(node_id).set_desc_distances_as_leaf();
-                } else if node.children.len() == 1 {
-                    // This only happens with malformed trees, bring forward the distances.
-                    let child_node = self.get_node(node.children[0]);
-                    if child_node.desc_distances.is_some() {
-                        let mut new_desc_distances =
-                            child_node.desc_distances.as_ref().unwrap().clone();
-                        for edge in new_desc_distances.values_mut() {
-                            *edge = *edge + node.parent_distance.unwrap_or(Edge(0.0));
-                        }
-                        self.get_node_mut(node_id)
-                            .set_desc_distances(&Some(new_desc_distances));
-                    } else {
-                        panic!("Unknown error, please report this.")
+        for &node_id in &self.get_node_idxs_at_depth(depth) {
+            let node = self.get_node(node_id);
+
+            // This is a leaf node, set the child distances to 0
+            if node.is_leaf() {
+                self.get_node_mut(node_id).set_desc_distances_as_leaf();
+            } else if node.children.len() == 1 {
+                // This only happens with malformed trees, bring forward the distances.
+                let child_node = self.get_node(node.children[0]);
+                if child_node.desc_distances.is_some() {
+                    let mut new_desc_distances =
+                        child_node.desc_distances.as_ref().unwrap().clone();
+                    for edge in new_desc_distances.values_mut() {
+                        *edge = *edge + node.parent_distance.unwrap_or(Edge(0.0));
                     }
+                    self.get_node_mut(node_id)
+                        .set_desc_distances(&Some(new_desc_distances));
                 } else {
-                    // 1. Set the descendant distances for this node.
-                    self.set_node_descendant_distance(node_id);
-
-                    // 2. Calculate the pairwise distances for the leaf nodes.
-                    self.calc_pairwise_distances_to_leaf_nodes(node_id, row_vec);
-
-                    // Free un-used memory
-                    self.unset_node_child_distances(node_id);
+                    panic!("Unknown error, please report this.")
                 }
-            });
+            } else {
+                // 1. Set the descendant distances for this node.
+                self.set_node_descendant_distance(node_id);
+
+                // 2. Calculate the pairwise distances for the leaf nodes.
+                self.calc_pairwise_distances_to_leaf_nodes(node_id, row_vec);
+
+                // Free un-used memory
+                self.unset_node_child_distances(node_id);
+            }
+        }
+
+        // self.get_node_idxs_at_depth(depth)
+        //     .into_iter()
+        //     .for_each(|node_id| {
+        //         let node = self.get_node(node_id);
+        //
+        //         // This is a leaf node, set the child distances to 0
+        //         if node.is_leaf() {
+        //             self.get_node_mut(node_id).set_desc_distances_as_leaf();
+        //         } else if node.children.len() == 1 {
+        //             // This only happens with malformed trees, bring forward the distances.
+        //             let child_node = self.get_node(node.children[0]);
+        //             if child_node.desc_distances.is_some() {
+        //                 let mut new_desc_distances =
+        //                     child_node.desc_distances.as_ref().unwrap().clone();
+        //                 for edge in new_desc_distances.values_mut() {
+        //                     *edge = *edge + node.parent_distance.unwrap_or(Edge(0.0));
+        //                 }
+        //                 self.get_node_mut(node_id)
+        //                     .set_desc_distances(&Some(new_desc_distances));
+        //             } else {
+        //                 panic!("Unknown error, please report this.")
+        //             }
+        //         } else {
+        //             // 1. Set the descendant distances for this node.
+        //             self.set_node_descendant_distance(node_id);
+        //
+        //             // 2. Calculate the pairwise distances for the leaf nodes.
+        //             self.calc_pairwise_distances_to_leaf_nodes(node_id, row_vec);
+        //
+        //             // Free un-used memory
+        //             self.unset_node_child_distances(node_id);
+        //         }
+        //     });
     }
 
     /// For a given node, iterate over its children and unset the descendant distances.
@@ -258,9 +291,9 @@ impl PDM {
         self.get_node(node_id)
             .children
             .clone()
-            .iter()
+            .into_iter()
             .for_each(|child_id| {
-                self.get_node_mut(*child_id).desc_distances = None;
+                self.get_node_mut(child_id).desc_distances = None;
             });
     }
 
@@ -273,10 +306,10 @@ impl PDM {
         let node = self.get_node(node_id);
 
         // Iterate over each child node and bring forward the distances.
-        node.children.clone().into_iter().for_each(|child_idx| {
+        for child_idx in &node.children {
             // Load the child node, and the descendant distances
             // Expects the descendant distances were already initialised.
-            let child_node = self.get_node(child_idx);
+            let child_node = self.get_node(*child_idx);
             let child_dist = child_node.parent_distance.unwrap();
             let child_dists = child_node.desc_distances.as_ref().unwrap();
 
@@ -284,7 +317,8 @@ impl PDM {
             for (grandchild_idx, grandchild_dist) in child_dists {
                 node_desc_distances.insert(*grandchild_idx, child_dist + *grandchild_dist);
             }
-        });
+        }
+
         self.get_node_mut(node_id).desc_distances = Some(node_desc_distances);
     }
 
@@ -292,7 +326,7 @@ impl PDM {
     /// Assumes that the memory has not been freed for the mapping.
     fn calc_pairwise_distances_to_leaf_nodes(&self, node_id: NodeId, row_vec: &mut [f64]) {
         let node = self.get_node(node_id);
-        let children_idxs = node.children.clone();
+        let children_idxs = &node.children;
 
         // Iterate over each child for this node, and do a pairwise calculation for each of the leaf
         // nodes in each of the children, defined by the desc_distances.
@@ -333,7 +367,7 @@ impl PDM {
 
     /// Orders the leaf nodes for reproducibility.
     fn order_leaf_node_idx(&mut self) {
-        let mut new_leaf_idx_to_row_idx: HashMap<NodeId, usize> = HashMap::new();
+        let mut new_leaf_idx_to_row_idx: HashMap<NodeId, usize> = HashMap::with_capacity(self.n_leaf_nodes());
         let mut new_row_idx_to_leaf_idx: Vec<NodeId> = vec![NodeId::default(); self.n_leaf_nodes()];
         for (new_idx, (_taxon, node_id)) in self
             .taxon_to_node_id
@@ -425,6 +459,7 @@ impl PDM {
     /// * `a`: - The first taxon.
     /// * `b`: - The second taxon.
     /// * `norm` - True if the result should be normalised by the sum of all branches in the tree.
+    #[must_use]
     pub fn distance(&self, a: &Taxon, b: &Taxon, norm: bool) -> f64 {
         assert!(
             !self.row_vec.is_none(),
@@ -437,3 +472,4 @@ impl PDM {
         return if norm { dist / self.length().0 } else { dist };
     }
 }
+
