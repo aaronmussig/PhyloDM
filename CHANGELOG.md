@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/aaronmussig/PhyloDM/compare/v2.1.3...v2.2.0) (2023-01-03)
+
+
+### Features
+
+* **python:** Add distance method to allow for distance calculation without constructing a distance matrix. ([7f86835](https://github.com/aaronmussig/PhyloDM/commit/7f868354dff4f08ecc992517227b072d82b1eff0))
+
 ## [2.1.3](https://github.com/aaronmussig/PhyloDM/compare/v2.1.2...v2.1.3) (2022-10-04)
 
 
