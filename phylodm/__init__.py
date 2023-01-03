@@ -91,3 +91,20 @@ class PhyloDM:
     def length(self) -> float:
         """Returns the total length of the tree (sum of branch lengths)."""
         return self._rs.length()
+
+    def compute_row_vec(self):
+        """Compute the row vector for the tree (required if not initialised from a Newick file)."""
+        return self._rs.compute_row_vec()
+
+    def distance(self, a: str, b: str, norm: Optional[bool] = False) -> float:
+        """Compute the distance between two taxa.
+
+        Args:
+            a: The first taxon.
+            b: The second taxon.
+            norm: If the distance should be normalised by the sum of branch lengths.
+
+        Returns:
+            The distance between the two taxa.
+        """
+        return self._rs.distance(a=a, b=b, norm=norm)

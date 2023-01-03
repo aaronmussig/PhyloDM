@@ -64,6 +64,16 @@ impl PhyloDM {
     pub fn length(&self) -> f64 {
         self.tree.length().0
     }
+    
+    pub fn compute_row_vec(&mut self) {
+        self.tree.compute_row_vec();
+    }
+    
+    pub fn distance(&self, a: &str, b: &str, norm: bool) -> f64 {
+        let taxon_a = Taxon(a.to_string());
+        let taxon_b = Taxon(b.to_string());
+        self.tree.distance(&taxon_a, &taxon_b, norm)
+    }
 }
 
 #[pymodule]
