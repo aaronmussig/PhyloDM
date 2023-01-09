@@ -11,7 +11,7 @@ use derive_more::Sum;
 /// use phylodm::tree::NodeId;
 /// NodeId(0);
 /// ```
-#[derive(Debug, Default, Clone, Copy, Eq, PartialOrd, PartialEq, Hash)]
+#[derive(Debug, Default, Clone, Copy, Eq, PartialOrd, PartialEq, Hash, Ord)]
 pub struct NodeId(pub usize);
 
 /// A distance between two nodes in the tree.

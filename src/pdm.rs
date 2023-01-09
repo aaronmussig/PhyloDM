@@ -26,6 +26,7 @@ pub struct PDM {
     pub(crate) nodes: Vec<Node>,
     pub(crate) taxon_to_node_id: HashMap<Taxon, NodeId>,
     pub(crate) leaf_idx_to_row_idx: HashMap<NodeId, usize>,
+    pub(crate) leaf_idx_to_row_idx_vec: Vec<usize>,
     pub(crate) row_idx_to_leaf_idx: Vec<NodeId>,
     pub(crate) nodes_at_depth: HashMap<NodeDepth, Vec<NodeId>>,
     pub(crate) row_vec: Option<Vec<f64>>,
@@ -78,7 +79,7 @@ impl PDM {
     /// Returns the row vector index for a given leaf node id.
     #[must_use]
     fn get_row_vec_idx_from_leaf_idx(&self, leaf_id: NodeId) -> usize {
-        *self.leaf_idx_to_row_idx.get(&leaf_id).expect("Leaf node not found!")
+        self.leaf_idx_to_row_idx_vec[leaf_id.0]
     }
 
     /// Get the row vector index for two taxa in the tree.
@@ -100,8 +101,7 @@ impl PDM {
         // Create the new node, and place it in the tree.
         let node_id = NodeId(self.n_nodes());
         self.taxon_to_node_id.insert(taxon.clone(), node_id);
-        self.leaf_idx_to_row_idx
-            .insert(node_id, self.leaf_idx_to_row_idx.len());
+        self.leaf_idx_to_row_idx.insert(node_id, self.leaf_idx_to_row_idx.len());
         self.row_idx_to_leaf_idx.push(node_id);
         self.nodes.push(Node::new(node_id, Some(taxon.clone())));
         return self.nodes.last().unwrap().id;
@@ -369,6 +369,11 @@ impl PDM {
     fn order_leaf_node_idx(&mut self) {
         let mut new_leaf_idx_to_row_idx: HashMap<NodeId, usize> = HashMap::with_capacity(self.n_leaf_nodes());
         let mut new_row_idx_to_leaf_idx: Vec<NodeId> = vec![NodeId::default(); self.n_leaf_nodes()];
+
+        // Find the maximum index for the leaf node
+        let &max_leaf_idx = self.leaf_idx_to_row_idx.keys().max().unwrap();
+        let mut new_row_idx_to_leaf_idx_vec: Vec<usize> = vec![0; max_leaf_idx.0 + 1];
+
         for (new_idx, (_taxon, node_id)) in self
             .taxon_to_node_id
             .iter()
@@ -377,9 +382,11 @@ impl PDM {
         {
             new_leaf_idx_to_row_idx.insert(*node_id, new_idx);
             new_row_idx_to_leaf_idx[new_idx] = *node_id;
+            new_row_idx_to_leaf_idx_vec[node_id.0] = new_idx;
         }
         self.leaf_idx_to_row_idx = new_leaf_idx_to_row_idx;
         self.row_idx_to_leaf_idx = new_row_idx_to_leaf_idx;
+        self.leaf_idx_to_row_idx_vec = new_row_idx_to_leaf_idx_vec;
     }
 
     /// Return the symmetrical pairwise distance matrix.
