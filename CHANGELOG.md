@@ -1,3 +1,11 @@
+## [2.2.1](https://github.com/aaronmussig/PhyloDM/compare/v2.2.0...v2.2.1) (2023-01-09)
+
+
+### Performance Improvements
+
+* **rust:** Replace leaf node index lookup HashMap with vector to improve performance. ([b857adb](https://github.com/aaronmussig/PhyloDM/commit/b857adbd67538bb58ec75896b0190bfe586ccbdf))
+* **rust:** Update iteration methods and reduce overheads when initialising new vectors/maps. ([6fb461a](https://github.com/aaronmussig/PhyloDM/commit/6fb461abdf2df4d66d886bdb27c143aa38ea67f8))
+
 # [2.2.0](https://github.com/aaronmussig/PhyloDM/compare/v2.1.3...v2.2.0) (2023-01-03)
 
 
