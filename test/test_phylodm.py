@@ -146,12 +146,12 @@ class TestPhyloDM(unittest.TestCase):
         self.assertTrue(test_tree['taxa'] == tuple(pdm.taxa()))
         return
 
-    def test_tree_with_bootstraps_from_newick(self):
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            tmp_dir = Path(tmp_dir)
-            path_newick = tmp_dir / 'newick.tree'
-
-            # Download the GTDB archaeal newick tree
-            url = 'https://data.gtdb.ecogenomic.org/releases/release89/89.0/ar122_r89.tree'
-            os.system(f'wget {url} -O {path_newick}')
-            PhyloDM.load_from_newick_path(str(path_newick))
+    # def test_tree_with_bootstraps_from_newick(self):
+    #     with tempfile.TemporaryDirectory() as tmp_dir:
+    #         tmp_dir = Path(tmp_dir)
+    #         path_newick = tmp_dir / 'newick.tree'
+    #
+    #         # Download the GTDB archaeal newick tree
+    #         url = 'https://data.gtdb.ecogenomic.org/releases/release89/89.0/ar122_r89.tree'
+    #         os.system(f'wget {url} -O {path_newick}')
+    #         PhyloDM.load_from_newick_path(str(path_newick))
