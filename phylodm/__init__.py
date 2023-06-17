@@ -3,8 +3,9 @@ from __future__ import annotations
 from typing import Optional, List
 from typing import TYPE_CHECKING
 
+import dendropy
+
 if TYPE_CHECKING:
-    import dendropy
     import numpy as np
 
 from .pdm import PhyloDM as PDM
@@ -23,9 +24,16 @@ class PhyloDM:
         Args:
             path: The path to the Newick file.
         """
-        pdm = cls()
-        pdm._rs.load_from_newick_path(path=path)
-        return pdm
+        try:
+            pdm = cls()
+            pdm._rs.load_from_newick_path(path=path)
+            return pdm
+        except Exception as e:
+            print(f'Unable to load newick tree using light_phylogeny (Rust). '
+                  f'This is likely due to it not supporting the extended Newick format... '
+                  f'falling back to DendroPy to load the tree.')
+            tree = dendropy.Tree.get(path=path, schema='newick')
+            return cls.load_from_dendropy(tree)
 
     @classmethod
     def load_from_dendropy(cls, tree: dendropy.Tree) -> 'PhyloDM':

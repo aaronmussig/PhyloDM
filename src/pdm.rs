@@ -1,10 +1,12 @@
 use std::collections::HashMap;
+use std::panic;
 
 use itertools::Itertools;
 use light_phylogeny::ArenaTree as LpTree;
 use light_phylogeny::read_newick;
 use ndarray::Array2;
 
+use crate::error::PhyloErr;
 use crate::tree::{Edge, NodeDepth, NodeId, Taxon};
 use crate::tree::Node;
 use crate::util::{create_row_vec_from_mat_dims, row_idx_from_mat_coords, row_vec_to_symmat};
@@ -40,14 +42,20 @@ impl PDM {
     }
 
     /// Return all leaf nodes in the tree.
-    #[must_use]
-    pub fn leaf_nodes(&self) -> Vec<Taxon> {
+    ///
+    /// # Errors
+    /// In the event that a leaf node has no taxon, this function will return an error.
+    /// This case should never happen, but is possible due to the way the tree is constructed.
+    pub fn leaf_nodes(&self) -> Result<Vec<Taxon>, PhyloErr> {
         let mut out = Vec::with_capacity(self.row_idx_to_leaf_idx.len());
         for leaf_idx in &self.row_idx_to_leaf_idx {
             let leaf = self.get_node(*leaf_idx);
-            out.push(leaf.taxon.clone().expect("Leaf node has no taxon! Please report this error."));
+            let Some(taxon) = &leaf.taxon else {
+                return Err(PhyloErr("Leaf node has no taxon! Please report this error.".to_string()));
+            };
+            out.push(taxon.clone());
         }
-        out
+        Ok(out)
     }
 
     /// Return the sum of all branches in the tree.
@@ -59,15 +67,19 @@ impl PDM {
             .sum()
     }
 
-    /// Returns a vector of node indices at a specific depth. Panics if depth doesn't exist.
-    #[must_use]
-    fn get_node_idxs_at_depth(&self, depth: NodeDepth) -> Vec<NodeId> {
-        let nodes_at_depth = self.nodes_at_depth.get(&depth).expect("No nodes at depth!");
+    /// Returns a vector of node indices at a specific depth. Errors if depth doesn't exist.
+    fn get_node_idxs_at_depth(&self, depth: NodeDepth) -> Result<Vec<NodeId>, PhyloErr> {
+        if self.nodes_at_depth.get(&depth).is_none() {
+            return Err(PhyloErr("No nodes at depth! Please report this error.".to_string()));
+        }
+        let Some(nodes_at_depth) = self.nodes_at_depth.get(&depth) else {
+            return Err(PhyloErr("No nodes at depth! Please report this error.".to_string()));
+        };
         let mut nodes: Vec<NodeId> = Vec::with_capacity(nodes_at_depth.len());
         for node_id in nodes_at_depth {
             nodes.push(*node_id);
         }
-        nodes
+        Ok(nodes)
     }
 
     /// Return the number of leaf nodes in the tree.
@@ -93,10 +105,11 @@ impl PDM {
 
     /// Add a new leaf node to the tree.
     /// Returns the ID of the new node.
-    fn add_leaf_node(&mut self, taxon: &Taxon) -> NodeId {
+    fn add_leaf_node(&mut self, taxon: &Taxon) -> Result<NodeId, PhyloErr> {
         // Panic if the taxon is already in the tree.
-        assert!(!self.taxon_to_node_id.contains_key(taxon),
-                "Taxon already exists in the tree: '{:?}'", taxon);
+        if self.taxon_to_node_id.contains_key(taxon) {
+            return Err(PhyloErr(format!("Taxon already exists in the tree: '{taxon:?}'")));
+        }
 
         // Create the new node, and place it in the tree.
         let node_id = NodeId(self.n_nodes());
@@ -104,7 +117,7 @@ impl PDM {
         self.leaf_idx_to_row_idx.insert(node_id, self.leaf_idx_to_row_idx.len());
         self.row_idx_to_leaf_idx.push(node_id);
         self.nodes.push(Node::new(node_id, Some(taxon.clone())));
-        return self.nodes.last().unwrap().id;
+        return Ok(self.nodes.last().unwrap().id);
     }
 
     /// Add a new internal node to the tree.
@@ -115,11 +128,10 @@ impl PDM {
     }
 
     /// Add a node to the tree.
-    // TODO: Remove this method.
-    pub(crate) fn add_node(&mut self, taxon: Option<&Taxon>) -> NodeId {
+    pub(crate) fn add_node(&mut self, taxon: Option<&Taxon>) -> Result<NodeId, PhyloErr> {
         match taxon {
             Some(t) => self.add_leaf_node(t),
-            None => self.add_internal_node(),
+            None => Ok(self.add_internal_node()),
         }
     }
 
@@ -149,25 +161,29 @@ impl PDM {
     }
 
     /// Set the depth of each node in the tree.
-    fn assign_node_depth(&mut self) {
+    fn assign_node_depth(&mut self) -> Result<(), PhyloErr> {
         // Iterate over each node to make sure there is only one root node.
         let mut root = None;
-        self.nodes.iter().for_each(|node| {
+        for node in &self.nodes {
             if node.is_root() {
-                assert!(root.is_none(), "Multiple root nodes detected!");
+                if root.is_some() {
+                    return Err(PhyloErr("Multiple root nodes detected!".to_string()));
+                }
                 root = Some(node.id);
             }
-        });
+        }
 
-        // Panic if no root node could be found.
-        assert!(root.is_some(), "No root node found!");
+        if root.is_none() {
+            return Err(PhyloErr("No root node detected!".to_string()));
+        }
 
         // Set the depth of all nodes
-        self.set_node_depth_dfs(root.unwrap());
+        self.set_node_depth_dfs(root.unwrap())?;
+        Ok(())
     }
 
     /// Set the depth of all nodes using a depth first search.
-    fn set_node_depth_dfs(&mut self, root_id: NodeId) {
+    fn set_node_depth_dfs(&mut self, root_id: NodeId) -> Result<(), PhyloErr> {
         let mut nodes_at_depth: HashMap<NodeDepth, Vec<NodeId>> = HashMap::new();
 
         // Seed the stack with the root node.
@@ -192,33 +208,37 @@ impl PDM {
         }
 
         // Check that the root is the only node at depth 0.
-        let nodes_at_depth_0 = nodes_at_depth.get(&NodeDepth(0)).expect("Root node not found!");
-        assert!(
-            !(nodes_at_depth_0.len() != 1 && nodes_at_depth_0[0] != root_id),
-            "Root node not found!"
-        );
+        if nodes_at_depth.get(&NodeDepth(0)).is_none() {
+            return Err(PhyloErr("Root node not found!".to_string()));
+        }
+        let Some(nodes_at_depth_0) = nodes_at_depth.get(&NodeDepth(0)) else {
+            return Err(PhyloErr("No nodes were found at depth 0, report this error.".to_string()));
+        };
+        if nodes_at_depth_0.len() != 1 && nodes_at_depth_0[0] != root_id {
+            return Err(PhyloErr("Root node not found!".to_string()));
+        }
 
         // Check that the deepest nodes have no children.
         let deepest_node_depth = NodeDepth(nodes_at_depth.len() - 1);
-        nodes_at_depth
-            .get(&deepest_node_depth)
-            .into_iter()
-            .for_each(|nodes| {
-                for node_id in nodes.iter() {
-                    let node = self.get_node(*node_id);
-                    assert!(node.is_leaf(), "Node has children: {:?}", node_id);
-                }
-            });
+        let Some(deepest_nodes) = nodes_at_depth.get(&deepest_node_depth) else {
+            return Err(PhyloErr("No nodes were found at depth max, report this error.".to_string()));
+        };
+        for node_id in deepest_nodes {
+            let node = self.get_node(*node_id);
+            if !node.is_leaf() {
+                return Err(PhyloErr("Node has children!".to_string()));
+            }
+        }
 
         // Save the hashmap
         self.nodes_at_depth = nodes_at_depth;
+        Ok(())
     }
 
     /// Wrapper method to calculate the pairwise distances at a given depth.
-    fn calculate_distances_at_depth(&mut self, depth: NodeDepth, row_vec: &mut [f64]) {
+    fn calculate_distances_at_depth(&mut self, depth: NodeDepth, row_vec: &mut [f64]) -> Result<(), PhyloErr> {
         // Iterate over all nodes a this depth
-
-        for &node_id in &self.get_node_idxs_at_depth(depth) {
+        for &node_id in &self.get_node_idxs_at_depth(depth)? {
             let node = self.get_node(node_id);
 
             // This is a leaf node, set the child distances to 0
@@ -236,7 +256,7 @@ impl PDM {
                     self.get_node_mut(node_id)
                         .set_desc_distances(&Some(new_desc_distances));
                 } else {
-                    panic!("Unknown error, please report this.")
+                    return Err(PhyloErr("Unknown error, please report this.".to_string()));
                 }
             } else {
                 // 1. Set the descendant distances for this node.
@@ -249,40 +269,7 @@ impl PDM {
                 self.unset_node_child_distances(node_id);
             }
         }
-
-        // self.get_node_idxs_at_depth(depth)
-        //     .into_iter()
-        //     .for_each(|node_id| {
-        //         let node = self.get_node(node_id);
-        //
-        //         // This is a leaf node, set the child distances to 0
-        //         if node.is_leaf() {
-        //             self.get_node_mut(node_id).set_desc_distances_as_leaf();
-        //         } else if node.children.len() == 1 {
-        //             // This only happens with malformed trees, bring forward the distances.
-        //             let child_node = self.get_node(node.children[0]);
-        //             if child_node.desc_distances.is_some() {
-        //                 let mut new_desc_distances =
-        //                     child_node.desc_distances.as_ref().unwrap().clone();
-        //                 for edge in new_desc_distances.values_mut() {
-        //                     *edge = *edge + node.parent_distance.unwrap_or(Edge(0.0));
-        //                 }
-        //                 self.get_node_mut(node_id)
-        //                     .set_desc_distances(&Some(new_desc_distances));
-        //             } else {
-        //                 panic!("Unknown error, please report this.")
-        //             }
-        //         } else {
-        //             // 1. Set the descendant distances for this node.
-        //             self.set_node_descendant_distance(node_id);
-        //
-        //             // 2. Calculate the pairwise distances for the leaf nodes.
-        //             self.calc_pairwise_distances_to_leaf_nodes(node_id, row_vec);
-        //
-        //             // Free un-used memory
-        //             self.unset_node_child_distances(node_id);
-        //         }
-        //     });
+        Ok(())
     }
 
     /// For a given node, iterate over its children and unset the descendant distances.
@@ -393,8 +380,11 @@ impl PDM {
     ///
     /// # Arguments
     /// * `norm` - True if the result should be normalized by the sum of all branches in the tree.
-    pub fn matrix(&mut self, norm: bool) -> (Vec<Taxon>, Array2<f64>) {
-        self.compute_row_vec();
+    ///
+    /// # Errors
+    /// If any errors are encountered due to unexpected tree structures, an error will be raised.
+    pub fn matrix(&mut self, norm: bool) -> Result<(Vec<Taxon>, Array2<f64>), PhyloErr> {
+        self.compute_row_vec()?;
 
         let mut array = row_vec_to_symmat(self.row_vec.as_ref().unwrap());
 
@@ -402,18 +392,35 @@ impl PDM {
             let tree_length = self.length();
             array.mapv_inplace(|x| x / tree_length.0);
         }
-        (self.leaf_nodes(), array)
+        Ok((self.leaf_nodes()?, array))
     }
 
     /// Initialise the PDM from a newick file.
-    pub fn load_from_newick_path(&mut self, path: &str) {
-        let mut lp_tree: LpTree<String> = LpTree::default();
-        read_newick(path.to_string(), &mut lp_tree);
+    ///
+    /// # Errors
+    /// If any errors are encountered due to unexpected tree structures, an error will be raised.
+    pub fn load_from_newick_path(&mut self, path: &str) -> Result<(), PhyloErr> {
+        // Catch any errors that light_phylogeny may throw
+        // Suppress the stderr message
+        let prev_hook = panic::take_hook();
+        panic::set_hook(Box::new(|_| {}));
+        let newick_ok = panic::catch_unwind(|| {
+            let mut lp_tree: LpTree<String> = LpTree::default();
+            read_newick(path.to_string(), &mut lp_tree);
+            lp_tree
+        });
+        panic::set_hook(prev_hook);
+        if newick_ok.is_err() {
+            return Err(PhyloErr("Error reading newick file".to_string()));
+        }
+        let lp_tree = newick_ok.unwrap();
+
+        // Import the tree
         for cur_node in &lp_tree.arena {
             if cur_node.name.is_empty() {
-                self.add_node(None);
+                self.add_node(None)?;
             } else {
-                self.add_node(Some(&Taxon(cur_node.name.clone())));
+                self.add_node(Some(&Taxon(cur_node.name.clone())))?;
             }
         }
         for cur_node in &lp_tree.arena {
@@ -426,11 +433,12 @@ impl PDM {
                 );
             }
         }
-        self.compute_row_vec();
+        self.compute_row_vec()?;
+        Ok(())
     }
 
     /// Computes the row vector. Required if the PDM was manually created (i.e. not from a newick file).
-    pub fn compute_row_vec(&mut self) {
+    pub fn compute_row_vec(&mut self) -> Result<(), PhyloErr> {
         // For reproducibility, order the taxa
         self.order_leaf_node_idx();
 
@@ -440,7 +448,7 @@ impl PDM {
 
         // Compute the depth of each node
         // TODO: No need to do this again if no new nodes have been added.
-        self.assign_node_depth();
+        self.assign_node_depth()?;
 
         // Process the deepest nodes first
         let depths = self
@@ -451,9 +459,10 @@ impl PDM {
             .copied()
             .collect::<Vec<_>>();
         for cur_depth in depths {
-            self.calculate_distances_at_depth(cur_depth, &mut row_vec);
+            self.calculate_distances_at_depth(cur_depth, &mut row_vec)?;
         }
         self.row_vec = Some(row_vec);
+        Ok(())
     }
 
     fn get_taxon_node_idx(&self, taxon: &Taxon) -> NodeId {
