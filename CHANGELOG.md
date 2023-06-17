@@ -1,3 +1,21 @@
+# [3.0.0](https://github.com/aaronmussig/PhyloDM/compare/v2.2.1...v3.0.0) (2023-06-17)
+
+
+### Features
+
+* **error handling:** Rust Result<> on fallible, Python extended newick support ([4d0520e](https://github.com/aaronmussig/PhyloDM/commit/4d0520e480380adf3f75364159784feec4cf27be))
+
+
+### BREAKING CHANGES
+
+* **error handling:** for Python.
+
+Rust:
+- Breaking API changes for all
+fallible methods, Result must be handled.
+* **error handling:** Rust API contains Result outputs for all fallible
+methods.
+
 ## [2.2.1](https://github.com/aaronmussig/PhyloDM/compare/v2.2.0...v2.2.1) (2023-01-09)
 
 
