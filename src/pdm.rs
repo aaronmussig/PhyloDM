@@ -21,7 +21,7 @@ use crate::util::{create_row_vec_from_mat_dims, row_idx_from_mat_coords, row_vec
 /// let mut tree = PDM::default();
 /// tree.load_from_newick_path("examples/example.tree");
 ///
-/// let (taxa, dm) = tree.matrix(true);
+/// let (taxa, dm) = tree.matrix(true).unwrap();
 /// ```
 #[derive(Default)]
 pub struct PDM {
