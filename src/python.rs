@@ -54,7 +54,7 @@ impl PhyloDM {
         }
         let binding = lengths.to_vec().unwrap();
         let new_lengths_vec: Vec<Edge> = binding.iter().map(|x| Edge(*x)).collect();
-        self.tree.update_edge_lengths(&new_lengths_vec);
+        let _ = self.tree.update_edge_lengths(&new_lengths_vec);
         Ok(())
     }
 

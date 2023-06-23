@@ -166,10 +166,12 @@ impl PDM {
     ///
     /// * `lengths`: - Slice of `Edge`s
     ///
-    pub fn update_edge_lengths(&mut self, lengths: &[Edge]) {
+    pub fn update_edge_lengths(&mut self, lengths: &[Edge]) -> Result<(), PhyloErr>{
         for i in 0..self.n_nodes() {
             self.get_node_mut((&self.nodes[i]).id).set_parent_distance(lengths[i]);
         }
+        self.compute_row_vec()?; // This appears to be unnecessary.
+        Ok(())
     }
 
     /// Set the depth of each node in the tree.
