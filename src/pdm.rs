@@ -37,7 +37,7 @@ pub struct PDM {
 impl PDM {
     /// Return the number of nodes (leaf + internal) in the tree.
     #[must_use]
-    fn n_nodes(&self) -> usize {
+    pub fn n_nodes(&self) -> usize {
         self.nodes.len()
     }
 
@@ -158,6 +158,18 @@ impl PDM {
     pub(crate) fn add_edge(&mut self, parent: NodeId, child: NodeId, length: Edge) {
         self.get_node_mut(parent).add_child(child);
         self.get_node_mut(child).set_parent(parent, length);
+    }
+
+    /// Update the edge lengths of a tree
+    ///
+    /// # Arguments
+    ///
+    /// * `lengths`: - Slice of `Edge`s
+    ///
+    pub fn update_edge_lengths(&mut self, lengths: &[Edge]) {
+        for i in 0..self.n_nodes() {
+            self.get_node_mut((&self.nodes[i]).id).set_parent_distance(lengths[i]);
+        }
     }
 
     /// Set the depth of each node in the tree.

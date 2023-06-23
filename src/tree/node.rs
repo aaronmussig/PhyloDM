@@ -54,6 +54,12 @@ impl Node {
         self.parent_distance = Some(length);
     }
 
+    // Set the distance to parent.
+    // Can the root have a distance?
+    pub fn set_parent_distance(&mut self, length: Edge) {
+        self.parent_distance = Some(length);
+    }
+
     /// Set the depth of this node.
     pub fn set_depth(&mut self, depth: NodeDepth) {
         self.depth = Some(depth);

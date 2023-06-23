@@ -146,6 +146,32 @@ class TestPhyloDM(unittest.TestCase):
         self.assertTrue(test_tree['taxa'] == tuple(pdm.taxa()))
         return
 
+    def test_tree_set_branch_lengths(self):
+        test_tree = get_test_tree(10, trifurication=True)
+        pdm = PhyloDM.load_from_dendropy(test_tree['tree'])
+
+        print('\n\n')
+        print('default')
+        dm = pdm.dm(norm=False)
+        print(dm)
+        print('pdm length ', pdm.length())
+        print('test length', test_tree['length'])
+
+        print('\nset 1')
+        num_nodes = len(pdm.get_nodes())
+        pdm.update_edge_lengths(np.ones((num_nodes)))
+        dm2 = pdm.dm(norm=False)
+        print('pdm length ', pdm.length())
+        print(dm2)
+
+        print('\nset 0')
+        num_nodes = len(pdm.get_nodes())
+        pdm.update_edge_lengths(np.zeros((num_nodes)))
+        dm3 = pdm.dm(norm=False)
+        print('pdm length ', pdm.length())
+        print(dm3)
+
+
     # def test_tree_with_bootstraps_from_newick(self):
     #     with tempfile.TemporaryDirectory() as tmp_dir:
     #         tmp_dir = Path(tmp_dir)
