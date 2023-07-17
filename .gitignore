@@ -145,3 +145,7 @@ wheelhouse/
 
 # Node modules
 node_modules/
+
+# venv
+bin/*
+pyvenv.cfg

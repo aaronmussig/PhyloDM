@@ -1,4 +1,4 @@
-use numpy::{PyArray2, ToPyArray};
+use numpy::{PyArray1, PyArray2, ToPyArray};
 use pyo3::{Py, pyclass, pymethods, pymodule, PyResult, Python, types::PyModule};
 use pyo3::exceptions::PyValueError;
 
@@ -44,6 +44,18 @@ impl PhyloDM {
             NodeId(child_id),
             Edge(length),
         );
+    }
+
+    pub fn update_edge_lengths(&mut self, lengths: &PyArray1<f64>) -> PyResult<()> {
+        let lengths_len = lengths.len();
+        let n_nodes = self.tree.n_nodes();
+        if lengths_len != n_nodes {
+            return Err(PyValueError::new_err(format!("Incorrect length of branch lengths. Tree has {n_nodes}. Received {lengths_len}.")));
+        }
+        let binding = lengths.to_vec().unwrap();
+        let new_lengths_vec: Vec<Edge> = binding.iter().map(|x| Edge(*x)).collect();
+        let _ = self.tree.update_edge_lengths(&new_lengths_vec);
+        Ok(())
     }
 
     pub fn get_nodes(&self) -> Vec<usize> {
