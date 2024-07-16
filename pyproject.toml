@@ -1,9 +1,55 @@
-[tool.cibuildwheel]
-before-all = "curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y"
-skip = "cp27-* cp34-* cp35-* cp36-* pp* *-win32 *-musllinux* *_i686*"
-environment = 'PATH="$PATH:$HOME/.cargo/bin"'
-test-command = "python -m unittest discover {project}/test"
-test-requires = ["dendropy", "numpy"]
+#[tool.cibuildwheel]
+#before-all = "curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y"
+#skip = "cp27-* cp34-* cp35-* cp36-* pp* *-win32 *-musllinux* *_i686*"
+#environment = 'PATH="$PATH:$HOME/.cargo/bin"'
+#test-command = "python -m unittest discover {project}/test"
+#test-requires = ["dendropy", "numpy"]
+#
+
+[project]
+name = "phylodm"
+version = "3.0.0"
+dependencies = ["dendropy", "numpy"]
+requires-python = ">=3.8"
+description = "Efficient calculation of phylogenetic distance matrices."
+readme = "README.md"
+authors = [
+    { name = "Aaron Mussig", email = "aaronmussig@gmail.com" }
+]
+license = { file = "LICENSE" }
+keywords = ["phylogenetic", "distance", "matrix", "symmetric"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Rust",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+
+[project.urls]
+Homepage = "https://github.com/aaronmussig/PhyloDM"
+Documentation = "https://github.com/aaronmussig/PhyloDM"
+Repository = "https://github.com/aaronmussig/PhyloDM"
+Issues = "https://github.com/aaronmussig/PhyloDM/issues"
+Changelog = "https://github.com/aaronmussig/PhyloDM/blob/main/CHANGELOG.md"
 
 [build-system]
-requires = ["setuptools", "wheel", "setuptools-rust"]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+python-source = "python"
+module-name = "phylodm.pdm"
+include = [
+    { format = "sdist", path = ".cargo/*" },
+    { format = "sdist", path = "Cargo.lock" },
+]
+
+# maturin develop --all-features
