@@ -10,7 +10,7 @@
     [
       "@semantic-release/exec",
       {
-        "verifyReleaseCmd": "./version.sh ${nextRelease.version} && echo ::set-output name=version::${nextRelease.version}"
+        "verifyReleaseCmd": "./version.sh ${nextRelease.version} && echo version=${nextRelease.version} >> $GITHUB_OUTPUT"
       }
     ],
     [

@@ -1,5 +1,5 @@
 use numpy::{PyArray2, ToPyArray};
-use pyo3::{Py, pyclass, pymethods, pymodule, PyResult, Python, types::PyModule};
+use pyo3::{Py, pyclass, pymethods, pymodule, PyResult, Python, types::PyModule, Bound};
 use pyo3::exceptions::PyValueError;
 
 use crate::pdm::PDM as RustPhyloDM;
@@ -61,7 +61,7 @@ impl PhyloDM {
         }
         let (_, array) = matrix.unwrap();
         Ok(Python::with_gil(|py| {
-            return Py::from(array.to_pyarray(py));
+            return Py::from(array.to_pyarray_bound(py));
         }))
     }
 
@@ -96,7 +96,7 @@ impl PhyloDM {
 }
 
 #[pymodule]
-fn pdm(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn pdm(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PhyloDM>()?;
     Ok(())
 }
