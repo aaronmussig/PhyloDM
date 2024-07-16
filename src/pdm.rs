@@ -57,6 +57,16 @@ impl PDM {
         }
         Ok(out)
     }
+    
+    /// Return all node IDs in the tree.
+    #[must_use]
+    pub fn node_ids(&self) -> Vec<NodeId> {
+        let mut out = Vec::with_capacity(self.nodes.len());
+        for node in &self.nodes {
+            out.push(node.id);
+        }
+        out
+    }
 
     /// Return the sum of all branches in the tree.
     #[must_use]
@@ -160,8 +170,51 @@ impl PDM {
         self.get_node_mut(child).set_parent(parent, length);
     }
 
-    /// Set the depth of each node in the tree.
-    pub fn assign_node_depth(&mut self) -> Result<(), PhyloErr> {
+    /// Update edge lengths of a tree
+    ///
+    /// # Arguments
+    ///
+    /// * `child_nodes`: - Slice of `NodeId`s
+    /// * `lengths`: - Slice of `Edge`s
+    ///
+    pub fn update_edge_lengths(&mut self, child_nodes: &[NodeId], lengths: &[Edge]) -> Result<(), PhyloErr> {
+        
+        // Find the root node and skip it
+        let root_node_id = self.root_node()?;
+        
+        // Check the vectors are the same length
+        if child_nodes.len() != lengths.len() {
+            return Err(PhyloErr("Lengths vector does not match the number of nodes!".to_string()));
+        }
+        
+        // Update the values
+        for (child_node_id, length) in child_nodes.iter().zip(lengths.iter()) {
+            if child_node_id == &root_node_id {
+                return Err(PhyloErr("Root node cannot have an edge length!".to_string()));
+            }
+            self.get_node_mut(*child_node_id).set_parent_distance(*length);
+        }
+        
+        self.compute_row_vec()?; // For distance matrix calculation
+        Ok(())
+    }
+    
+    /// Update all edge lengths of a tree to the same value.
+    pub fn update_all_edge_lengths(&mut self, length: Edge) -> Result<(), PhyloErr> {
+        let root_node_id = self.root_node()?;
+        let node_ids = self.node_ids();
+        
+        for node_id in node_ids {
+            if node_id != root_node_id {
+                self.get_node_mut(node_id).set_parent_distance(length);
+            }
+        }
+        self.compute_row_vec()?; // For distance matrix calculation
+        Ok(())
+    }
+    
+    /// Return the root node of the tree.
+    pub fn root_node(&self) -> Result<NodeId, PhyloErr> {
         // Iterate over each node to make sure there is only one root node.
         let mut root = None;
         for node in &self.nodes {
@@ -172,13 +225,19 @@ impl PDM {
                 root = Some(node.id);
             }
         }
-
         if root.is_none() {
             return Err(PhyloErr("No root node detected!".to_string()));
         }
+        Ok(root.unwrap())
+    }
+
+    /// Set the depth of each node in the tree.
+    pub fn assign_node_depth(&mut self) -> Result<(), PhyloErr> {
+        // Iterate over each node to make sure there is only one root node.
+        let root = self.root_node()?;
 
         // Set the depth of all nodes
-        self.set_node_depth_dfs(root.unwrap())?;
+        self.set_node_depth_dfs(root)?;
         Ok(())
     }
 
@@ -237,7 +296,7 @@ impl PDM {
 
     /// Wrapper method to calculate the pairwise distances at a given depth.
     pub fn calculate_distances_at_depth(&mut self, depth: NodeDepth, row_vec: &mut [f64]) -> Result<(), PhyloErr> {
-        // Iterate over all nodes a this depth
+        // Iterate over all nodes at this depth
         for &node_id in &self.get_node_idxs_at_depth(depth)? {
             let node = self.get_node(node_id);
 

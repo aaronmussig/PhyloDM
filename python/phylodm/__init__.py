@@ -77,6 +77,12 @@ class PhyloDM:
         """
         return self._rs.add_edge(parent_id=parent_id, child_id=child_id, length=length)
 
+    def update_edge_lengths(self, child_nodes: np.ndarray, new_edge_lengths: np.ndarray):
+        return self._rs.update_edge_lengths(child_nodes=child_nodes, lengths=new_edge_lengths)
+    
+    def update_all_edge_lengths(self, length: float):
+        return self._rs.update_all_edge_lengths(length=length)
+
     def get_nodes(self) -> List[int]:
         """Return all node indexes in the tree."""
         return self._rs.get_nodes()

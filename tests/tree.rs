@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use phylodm::PDM;
-    use phylodm::tree::Taxon;
+    use phylodm::tree::{Taxon, Edge};
 
     #[test]
     fn test_tree_dm_twice() {
@@ -169,4 +169,83 @@ mod tests {
             ]
         );
     }
+
+    #[test]
+    fn test_set_lengths() {
+        
+        // Load in the default tree from test.tree
+        // Then calculate the distance matrix as arr_normal
+        let mut tree_normal = PDM::default();
+        let _ = tree_normal.load_from_newick_path("tests/test.tree");
+        let (_taxon, arr_normal) = tree_normal.matrix(false).unwrap();
+        let tree_normal_length = tree_normal.length();
+
+        // Load in the modified tree with all branch lengths = 7
+        // Then calculate the distance matrix as arr_bl7
+        let mut tree_bl7 = PDM::default();
+        let _ = tree_bl7.load_from_newick_path("tests/test_bl_7.tree");
+        let (_taxon, arr_bl7) = tree_bl7.matrix(false).unwrap();
+        let tree_bl7_length = tree_bl7.length();
+        
+        // Use the default tree and modify all branch lengths to be 7
+        // Then calculate the distance matrix as arr_modified_7
+        let _ = tree_normal.update_all_edge_lengths(Edge(7.0));
+        let (_taxon, arr_modified_7) = tree_normal.matrix(false).unwrap();
+        let tree_modified_7_length: Edge = tree_normal.length();
+        
+        println!("\n\nNormal");
+        println!("{:?}", arr_normal);
+        println!("{:?}", tree_normal_length);
+
+        println!("Branch lengths 7 (from file)");
+        println!("{:?}", arr_bl7);
+        println!("{:?}", tree_bl7_length);
+
+        println!("Branch lengths 7 (modified)");
+        println!("{:?}", arr_modified_7);
+        println!("{:?}", tree_modified_7_length);
+
+        // Somehow the modified tree is 7 units longer that the one read from file.
+        assert_eq!(arr_bl7, arr_modified_7);
+        assert_eq!(tree_bl7_length.0, tree_modified_7_length.0);
+      
+    }
+
+
+    #[test]
+    fn test_update_edge_lengths() {
+        let mut tree = PDM::default();
+        
+        let taxon_b = Taxon("B".to_string());
+        let taxon_c = Taxon("C".to_string());
+        let taxon_d = Taxon("D".to_string());
+        
+        let root_node = tree.add_node(None).unwrap();
+        let node_a = tree.add_node(None).unwrap();
+        let node_b = tree.add_node(Some(&taxon_b)).unwrap();
+        let node_c = tree.add_node(Some(&taxon_c)).unwrap();
+        let node_d = tree.add_node(Some(&taxon_d)).unwrap();
+        
+        tree.add_edge(root_node, node_a, Edge(1.0));
+        tree.add_edge(root_node, node_b, Edge(2.0));
+        tree.add_edge(node_a, node_c, Edge(3.0));
+        tree.add_edge(node_a, node_d, Edge(7.0));
+        
+        tree.compute_row_vec().unwrap();
+        
+        let dist_b_to_c_before = tree.distance(&taxon_b, &taxon_c, false);
+        
+        let node_ids = vec![node_a, node_c];
+        let lengths = vec![Edge(11.0), Edge(12.0)];
+        
+        let _ = tree.update_edge_lengths(&node_ids, &lengths);
+
+        let dist_b_to_c_after = tree.distance(&taxon_b, &taxon_c, false);
+        
+        assert_eq!(dist_b_to_c_before, 6.0);
+        assert_eq!(dist_b_to_c_after, 25.0);
+
+    }
+
+
 }
