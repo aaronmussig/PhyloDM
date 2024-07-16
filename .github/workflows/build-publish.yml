@@ -99,7 +99,7 @@ jobs:
         with:
           name: pypi
           path: dist
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       - run: echo "((A:1,B:2):1,(C:1,(D:3,E:4):2):2);" > test.tree
