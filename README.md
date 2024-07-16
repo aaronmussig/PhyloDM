@@ -17,7 +17,7 @@ can be used in either Python or Rust, however, the documentation below is writte
 
 ## ⚙ Installation
 
-*Requires Python 3.7+*
+*Requires Python 3.9+*
 
 ### PyPI
 

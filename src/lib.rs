@@ -1,6 +1,6 @@
 pub use self::pdm::PDM;
 
-mod pdm;
+pub mod pdm;
 
 #[cfg(feature = "python")]
 pub mod python;

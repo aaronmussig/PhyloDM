@@ -1,5 +1,5 @@
-use numpy::{PyArray2, ToPyArray};
-use pyo3::{Py, pyclass, pymethods, pymodule, PyResult, Python, types::PyModule};
+use numpy::{PyArray1, PyArray2, PyArrayMethods, ToPyArray};
+use pyo3::{Py, pyclass, pymethods, pymodule, PyResult, Python, types::PyModule, Bound};
 use pyo3::exceptions::PyValueError;
 
 use crate::pdm::PDM as RustPhyloDM;
@@ -46,6 +46,31 @@ impl PhyloDM {
         );
     }
 
+    pub fn update_edge_lengths(&mut self, child_nodes: &Bound<'_, PyArray1<usize>>, lengths: &Bound<'_, PyArray1<f64>>) -> PyResult<()> {
+        
+        let binding = lengths.to_vec().unwrap();
+        let new_lengths_vec: Vec<Edge> = binding.iter().map(|x| Edge(*x)).collect();
+        
+        let child_nodes_binding = child_nodes.to_vec().unwrap();
+        let child_nodes_vec: Vec<NodeId> = child_nodes_binding.iter().map(|x| NodeId(*x)).collect();
+        
+        let result = self.tree.update_edge_lengths(&child_nodes_vec, &new_lengths_vec);
+        
+        if result.is_err() {
+            return Err(PyValueError::new_err("Unable to update edge lengths."));
+        }
+        
+        Ok(())
+    }
+    
+    pub fn update_all_edge_lengths(&mut self, length: f64) -> PyResult<()> {
+        let result = self.tree.update_all_edge_lengths(Edge(length));
+        if result.is_err() {
+            return Err(PyValueError::new_err("Unable to update all edge lengths."));
+        }
+        Ok(())
+    }
+
     pub fn get_nodes(&self) -> Vec<usize> {
         let mut out = Vec::new();
         for node in &self.tree.nodes {
@@ -61,7 +86,7 @@ impl PhyloDM {
         }
         let (_, array) = matrix.unwrap();
         Ok(Python::with_gil(|py| {
-            return Py::from(array.to_pyarray(py));
+            return Py::from(array.to_pyarray_bound(py));
         }))
     }
 
@@ -96,7 +121,7 @@ impl PhyloDM {
 }
 
 #[pymodule]
-fn pdm(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn pdm(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PhyloDM>()?;
     Ok(())
 }

@@ -7,7 +7,7 @@ description = "Efficient calculation of phylogenetic distance matrices."
 readme = "README.md"
 repository = "https://github.com/aaronmussig/PhyloDM"
 license = "GPL-3.0"
-rust-version = "1.65.0"
+rust-version = "1.71.1"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -16,12 +16,12 @@ crate-type = ["cdylib", "rlib"]
 python = ["pyo3", "numpy"]
 
 [dependencies]
-light_phylogeny = "2.1"
-derive_more = "0.99"
-itertools = "0.10"
-pyo3 = { version = "0.19.0", features = ["extension-module"], optional = true }
-numpy = { version = "0.19.0", optional = true }
-ndarray = "0.15"
+light_phylogeny = "2.2.7"
+derive_more = "0.99.18"
+itertools = "0.13"
+pyo3 = { version = "0.21.0", features = ["extension-module"], optional = true }
+numpy = { version = "0.21.0", optional = true }
+ndarray = "0.15.6"
 
 [profile.release]
 lto = true

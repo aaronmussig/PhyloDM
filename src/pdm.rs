@@ -25,19 +25,19 @@ use crate::util::{create_row_vec_from_mat_dims, row_idx_from_mat_coords, row_vec
 /// ```
 #[derive(Default)]
 pub struct PDM {
-    pub(crate) nodes: Vec<Node>,
-    pub(crate) taxon_to_node_id: HashMap<Taxon, NodeId>,
-    pub(crate) leaf_idx_to_row_idx: HashMap<NodeId, usize>,
-    pub(crate) leaf_idx_to_row_idx_vec: Vec<usize>,
-    pub(crate) row_idx_to_leaf_idx: Vec<NodeId>,
-    pub(crate) nodes_at_depth: HashMap<NodeDepth, Vec<NodeId>>,
-    pub(crate) row_vec: Option<Vec<f64>>,
+    pub nodes: Vec<Node>,
+    pub taxon_to_node_id: HashMap<Taxon, NodeId>,
+    pub leaf_idx_to_row_idx: HashMap<NodeId, usize>,
+    pub leaf_idx_to_row_idx_vec: Vec<usize>,
+    pub row_idx_to_leaf_idx: Vec<NodeId>,
+    pub nodes_at_depth: HashMap<NodeDepth, Vec<NodeId>>,
+    pub row_vec: Option<Vec<f64>>,
 }
 
 impl PDM {
     /// Return the number of nodes (leaf + internal) in the tree.
     #[must_use]
-    fn n_nodes(&self) -> usize {
+    pub fn n_nodes(&self) -> usize {
         self.nodes.len()
     }
 
@@ -57,6 +57,16 @@ impl PDM {
         }
         Ok(out)
     }
+    
+    /// Return all node IDs in the tree.
+    #[must_use]
+    pub fn node_ids(&self) -> Vec<NodeId> {
+        let mut out = Vec::with_capacity(self.nodes.len());
+        for node in &self.nodes {
+            out.push(node.id);
+        }
+        out
+    }
 
     /// Return the sum of all branches in the tree.
     #[must_use]
@@ -68,7 +78,7 @@ impl PDM {
     }
 
     /// Returns a vector of node indices at a specific depth. Errors if depth doesn't exist.
-    fn get_node_idxs_at_depth(&self, depth: NodeDepth) -> Result<Vec<NodeId>, PhyloErr> {
+    pub fn get_node_idxs_at_depth(&self, depth: NodeDepth) -> Result<Vec<NodeId>, PhyloErr> {
         if self.nodes_at_depth.get(&depth).is_none() {
             return Err(PhyloErr("No nodes at depth! Please report this error.".to_string()));
         }
@@ -90,13 +100,13 @@ impl PDM {
 
     /// Returns the row vector index for a given leaf node id.
     #[must_use]
-    fn get_row_vec_idx_from_leaf_idx(&self, leaf_id: NodeId) -> usize {
+    pub fn get_row_vec_idx_from_leaf_idx(&self, leaf_id: NodeId) -> usize {
         self.leaf_idx_to_row_idx_vec[leaf_id.0]
     }
 
     /// Get the row vector index for two taxa in the tree.
     #[must_use]
-    fn get_row_vec_idx_dist_between_leaf_idx(&self, i: NodeId, j: NodeId) -> usize {
+    pub fn get_row_vec_idx_dist_between_leaf_idx(&self, i: NodeId, j: NodeId) -> usize {
         let n_taxa = self.n_leaf_nodes();
         let i_idx = self.get_row_vec_idx_from_leaf_idx(i);
         let j_idx = self.get_row_vec_idx_from_leaf_idx(j);
@@ -105,7 +115,7 @@ impl PDM {
 
     /// Add a new leaf node to the tree.
     /// Returns the ID of the new node.
-    fn add_leaf_node(&mut self, taxon: &Taxon) -> Result<NodeId, PhyloErr> {
+    pub fn add_leaf_node(&mut self, taxon: &Taxon) -> Result<NodeId, PhyloErr> {
         // Panic if the taxon is already in the tree.
         if self.taxon_to_node_id.contains_key(taxon) {
             return Err(PhyloErr(format!("Taxon already exists in the tree: '{taxon:?}'")));
@@ -121,14 +131,14 @@ impl PDM {
     }
 
     /// Add a new internal node to the tree.
-    fn add_internal_node(&mut self) -> NodeId {
+    pub fn add_internal_node(&mut self) -> NodeId {
         let node_id = NodeId(self.n_nodes());
         self.nodes.push(Node::new(node_id, None));
         return self.nodes.last().unwrap().id;
     }
 
     /// Add a node to the tree.
-    pub(crate) fn add_node(&mut self, taxon: Option<&Taxon>) -> Result<NodeId, PhyloErr> {
+    pub fn add_node(&mut self, taxon: Option<&Taxon>) -> Result<NodeId, PhyloErr> {
         match taxon {
             Some(t) => self.add_leaf_node(t),
             None => Ok(self.add_internal_node()),
@@ -137,13 +147,13 @@ impl PDM {
 
     /// Retrieve a node from the tree.
     #[must_use]
-    fn get_node(&self, node_id: NodeId) -> &Node {
+    pub fn get_node(&self, node_id: NodeId) -> &Node {
         &self.nodes[node_id.0]
     }
 
     /// Retrieve a mutable node from the tree.
     #[must_use]
-    fn get_node_mut(&mut self, node_id: NodeId) -> &mut Node {
+    pub fn get_node_mut(&mut self, node_id: NodeId) -> &mut Node {
         &mut self.nodes[node_id.0]
     }
 
@@ -155,13 +165,56 @@ impl PDM {
     /// * `child`:  - `NodeId` of the child node.
     /// * `length`: - The branch length between these nodes.
     ///
-    pub(crate) fn add_edge(&mut self, parent: NodeId, child: NodeId, length: Edge) {
+    pub fn add_edge(&mut self, parent: NodeId, child: NodeId, length: Edge) {
         self.get_node_mut(parent).add_child(child);
         self.get_node_mut(child).set_parent(parent, length);
     }
 
-    /// Set the depth of each node in the tree.
-    fn assign_node_depth(&mut self) -> Result<(), PhyloErr> {
+    /// Update edge lengths of a tree
+    ///
+    /// # Arguments
+    ///
+    /// * `child_nodes`: - Slice of `NodeId`s
+    /// * `lengths`: - Slice of `Edge`s
+    ///
+    pub fn update_edge_lengths(&mut self, child_nodes: &[NodeId], lengths: &[Edge]) -> Result<(), PhyloErr> {
+        
+        // Find the root node and skip it
+        let root_node_id = self.root_node()?;
+        
+        // Check the vectors are the same length
+        if child_nodes.len() != lengths.len() {
+            return Err(PhyloErr("Lengths vector does not match the number of nodes!".to_string()));
+        }
+        
+        // Update the values
+        for (child_node_id, length) in child_nodes.iter().zip(lengths.iter()) {
+            if child_node_id == &root_node_id {
+                return Err(PhyloErr("Root node cannot have an edge length!".to_string()));
+            }
+            self.get_node_mut(*child_node_id).set_parent_distance(*length);
+        }
+        
+        self.compute_row_vec()?; // For distance matrix calculation
+        Ok(())
+    }
+    
+    /// Update all edge lengths of a tree to the same value.
+    pub fn update_all_edge_lengths(&mut self, length: Edge) -> Result<(), PhyloErr> {
+        let root_node_id = self.root_node()?;
+        let node_ids = self.node_ids();
+        
+        for node_id in node_ids {
+            if node_id != root_node_id {
+                self.get_node_mut(node_id).set_parent_distance(length);
+            }
+        }
+        self.compute_row_vec()?; // For distance matrix calculation
+        Ok(())
+    }
+    
+    /// Return the root node of the tree.
+    pub fn root_node(&self) -> Result<NodeId, PhyloErr> {
         // Iterate over each node to make sure there is only one root node.
         let mut root = None;
         for node in &self.nodes {
@@ -172,18 +225,24 @@ impl PDM {
                 root = Some(node.id);
             }
         }
-
         if root.is_none() {
             return Err(PhyloErr("No root node detected!".to_string()));
         }
+        Ok(root.unwrap())
+    }
+
+    /// Set the depth of each node in the tree.
+    pub fn assign_node_depth(&mut self) -> Result<(), PhyloErr> {
+        // Iterate over each node to make sure there is only one root node.
+        let root = self.root_node()?;
 
         // Set the depth of all nodes
-        self.set_node_depth_dfs(root.unwrap())?;
+        self.set_node_depth_dfs(root)?;
         Ok(())
     }
 
     /// Set the depth of all nodes using a depth first search.
-    fn set_node_depth_dfs(&mut self, root_id: NodeId) -> Result<(), PhyloErr> {
+    pub fn set_node_depth_dfs(&mut self, root_id: NodeId) -> Result<(), PhyloErr> {
         let mut nodes_at_depth: HashMap<NodeDepth, Vec<NodeId>> = HashMap::new();
 
         // Seed the stack with the root node.
@@ -236,8 +295,8 @@ impl PDM {
     }
 
     /// Wrapper method to calculate the pairwise distances at a given depth.
-    fn calculate_distances_at_depth(&mut self, depth: NodeDepth, row_vec: &mut [f64]) -> Result<(), PhyloErr> {
-        // Iterate over all nodes a this depth
+    pub fn calculate_distances_at_depth(&mut self, depth: NodeDepth, row_vec: &mut [f64]) -> Result<(), PhyloErr> {
+        // Iterate over all nodes at this depth
         for &node_id in &self.get_node_idxs_at_depth(depth)? {
             let node = self.get_node(node_id);
 
@@ -274,7 +333,7 @@ impl PDM {
 
     /// For a given node, iterate over its children and unset the descendant distances.
     /// This is mainly to free memory during distance matrix calculation.
-    fn unset_node_child_distances(&mut self, node_id: NodeId) {
+    pub fn unset_node_child_distances(&mut self, node_id: NodeId) {
         self.get_node(node_id)
             .children
             .clone()
@@ -287,7 +346,7 @@ impl PDM {
     /// This function sets the descendant distances for a given node.
     /// Note: This is only the distances to all descendant nodes (including leaf nodes).
     /// The pairwise leaf distances are calculated in another method.
-    fn set_node_descendant_distance(&mut self, node_id: NodeId) {
+    pub fn set_node_descendant_distance(&mut self, node_id: NodeId) {
         let mut node_desc_distances: HashMap<NodeId, Edge> = HashMap::new();
 
         let node = self.get_node(node_id);
@@ -311,7 +370,7 @@ impl PDM {
 
     /// This function calculates the pairwise distances to all leaf nodes.
     /// Assumes that the memory has not been freed for the mapping.
-    fn calc_pairwise_distances_to_leaf_nodes(&self, node_id: NodeId, row_vec: &mut [f64]) {
+    pub fn calc_pairwise_distances_to_leaf_nodes(&self, node_id: NodeId, row_vec: &mut [f64]) {
         let node = self.get_node(node_id);
         let children_idxs = &node.children;
 
@@ -353,7 +412,7 @@ impl PDM {
     }
 
     /// Orders the leaf nodes for reproducibility.
-    fn order_leaf_node_idx(&mut self) {
+    pub fn order_leaf_node_idx(&mut self) {
         let mut new_leaf_idx_to_row_idx: HashMap<NodeId, usize> = HashMap::with_capacity(self.n_leaf_nodes());
         let mut new_row_idx_to_leaf_idx: Vec<NodeId> = vec![NodeId::default(); self.n_leaf_nodes()];
 
@@ -465,7 +524,7 @@ impl PDM {
         Ok(())
     }
 
-    fn get_taxon_node_idx(&self, taxon: &Taxon) -> NodeId {
+    pub fn get_taxon_node_idx(&self, taxon: &Taxon) -> NodeId {
         self.taxon_to_node_id[taxon]
     }
 
