@@ -1,3 +1,14 @@
+# [3.1.0](https://github.com/aaronmussig/PhyloDM/compare/v3.0.0...v3.1.0) (2024-07-16)
+
+
+### Features
+
+* **edges:** update_edge_lengths and update_all_edge_lengths added (Thanks @FinnOD!) ([bed49be](https://github.com/aaronmussig/PhyloDM/commit/bed49be78bd587cd683fc1ba461c9f922ffd8049))
+* **maturin:** Add maturin for building. ([7ab9a46](https://github.com/aaronmussig/PhyloDM/commit/7ab9a4670aa25f4769fc05d136401947586f2b35))
+* **maturin:** Add maturin for building. ([010da14](https://github.com/aaronmussig/PhyloDM/commit/010da1401521ebd9dbfc93992cca2d56f0efc64c))
+* **maturin:** Add maturin for building. ([64c955b](https://github.com/aaronmussig/PhyloDM/commit/64c955b8d480469e14f904b40baf3bf8556f36c1))
+* **rust:** Make all methods public for other applications. ([aaea7e5](https://github.com/aaronmussig/PhyloDM/commit/aaea7e576d2b1dd58bec9069d0e9cbfa18bd953c))
+
 # [3.0.0](https://github.com/aaronmussig/PhyloDM/compare/v2.2.1...v3.0.0) (2023-06-17)
 
 
