@@ -53,16 +53,12 @@ jobs:
         platform:
           - runner: ubuntu-latest
             target: x86_64
-          - runner: ubuntu-latest
-            target: x86
-#          - runner: ubuntu-latest
-#            target: aarch64
         python-version:
           - '3.8'
-#          - '3.9'
-#          - '3.10'
-#          - '3.11'
-#          - '3.12'
+          - '3.9'
+          - '3.10'
+          - '3.11'
+          - '3.12'
     steps:
       - uses: actions/checkout@v4
 #      - uses: actions/download-artifact@v4
@@ -71,26 +67,25 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Build wheels
+      - name: Build wheel
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist -j 1 --all-features --strip --interpreter python${{ matrix.python-version }}
           sccache: 'true'
           manylinux: auto
+      - name: Test wheel
+        run: |
+          echo "((A:1,B:2):1,(C:1,(D:3,E:4):2):2);" > test.tree
+          python -m pip install dendropy
+          python -m pip install dist/*.whl --force-reinstall
+          python -c "from phylodm import PhyloDM; PhyloDM.load_from_newick_path('test.tree')"
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
           name: wheels-linux-${{ matrix.platform.runner }}-${{ matrix.platform.target }}-${{ matrix.python-version }}
           path: dist
           retention-days: 1
-      - name: Test wheel
-        run: |
-          echo "((A:1,B:2):1,(C:1,(D:3,E:4):2):2);" > test.tree
-          python -m pip install dendropy
-          python -m pip install dist/*.whl
-          python -c "from phylodm import PhyloDM; PhyloDM.load_from_newick_path('test.tree')"
-
 
 #
 #  build_python_wheels:
