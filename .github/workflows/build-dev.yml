@@ -44,6 +44,7 @@ jobs:
 #      - run:
 #            cargo test --release --all-features
 
+
   build_linux:
 #    needs: test_rust
     runs-on: ${{ matrix.platform.runner }}
@@ -74,7 +75,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist
+          args: --release --out dist -j 1 --all-features --strip --interpreter python${{ matrix.python-version }}
           sccache: 'true'
           manylinux: auto
       - name: Upload wheels
