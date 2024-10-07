@@ -156,3 +156,38 @@ fn test_row_vec_to_symmat() {
     assert_eq!(array[[2, 1]], 4.0);
     assert_eq!(array[[2, 2]], 5.0);
 }
+
+/// Sort a vector of f64 values and return the indices that would sort the vector.
+/// No ordering is guaranteed for equal elements.
+///
+/// # Arguments
+///
+/// * `vec`: - The row vector to sort.
+///
+/// # Examples
+///
+/// ```
+/// use phylodm::util::argsort_vec;
+/// let indices = argsort_vec(&vec![1.0, 3.0, 2.0, 4.0]);
+/// assert_eq!(indices, vec![0, 2, 1, 3]);
+/// ```
+pub fn argsort_vec(vec: &[f64]) -> Vec<usize> {
+    let mut indices: Vec<usize> = (0..vec.len()).collect();
+    indices.sort_unstable_by(|&i, &j| {
+        vec[i]
+            .partial_cmp(&vec[j])
+            .expect("Elements must not be NaN.")
+    });
+    indices
+}
+
+#[test]
+fn test_argsort_vec() {
+    let arr = vec![1.0, 3.0, 2.0];
+    let indices = argsort_vec(&arr);
+    assert_eq!(indices, vec![0, 2, 1]);
+
+    let arr = vec![1.0, 3.0, 2.0, 4.0];
+    let indices = argsort_vec(&arr);
+    assert_eq!(indices, vec![0, 2, 1, 3]);
+}
