@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
+    use phylodm::tree::{Edge, Taxon};
     use phylodm::PDM;
-    use phylodm::tree::{Taxon, Edge};
 
     #[test]
     fn test_tree_dm_twice() {
@@ -172,7 +172,6 @@ mod tests {
 
     #[test]
     fn test_set_lengths() {
-        
         // Load in the default tree from test.tree
         // Then calculate the distance matrix as arr_normal
         let mut tree_normal = PDM::default();
@@ -186,13 +185,13 @@ mod tests {
         let _ = tree_bl7.load_from_newick_path("tests/test_bl_7.tree");
         let (_taxon, arr_bl7) = tree_bl7.matrix(false).unwrap();
         let tree_bl7_length = tree_bl7.length();
-        
+
         // Use the default tree and modify all branch lengths to be 7
         // Then calculate the distance matrix as arr_modified_7
         let _ = tree_normal.update_all_edge_lengths(Edge(7.0));
         let (_taxon, arr_modified_7) = tree_normal.matrix(false).unwrap();
         let tree_modified_7_length: Edge = tree_normal.length();
-        
+
         println!("\n\nNormal");
         println!("{:?}", arr_normal);
         println!("{:?}", tree_normal_length);
@@ -208,44 +207,206 @@ mod tests {
         // Somehow the modified tree is 7 units longer that the one read from file.
         assert_eq!(arr_bl7, arr_modified_7);
         assert_eq!(tree_bl7_length.0, tree_modified_7_length.0);
-      
     }
-
 
     #[test]
     fn test_update_edge_lengths() {
         let mut tree = PDM::default();
-        
+
         let taxon_b = Taxon("B".to_string());
         let taxon_c = Taxon("C".to_string());
         let taxon_d = Taxon("D".to_string());
-        
+
         let root_node = tree.add_node(None).unwrap();
         let node_a = tree.add_node(None).unwrap();
         let node_b = tree.add_node(Some(&taxon_b)).unwrap();
         let node_c = tree.add_node(Some(&taxon_c)).unwrap();
         let node_d = tree.add_node(Some(&taxon_d)).unwrap();
-        
+
         tree.add_edge(root_node, node_a, Edge(1.0));
         tree.add_edge(root_node, node_b, Edge(2.0));
         tree.add_edge(node_a, node_c, Edge(3.0));
         tree.add_edge(node_a, node_d, Edge(7.0));
-        
+
         tree.compute_row_vec().unwrap();
-        
+
         let dist_b_to_c_before = tree.distance(&taxon_b, &taxon_c, false);
-        
+
         let node_ids = vec![node_a, node_c];
         let lengths = vec![Edge(11.0), Edge(12.0)];
-        
+
         let _ = tree.update_edge_lengths(&node_ids, &lengths);
 
         let dist_b_to_c_after = tree.distance(&taxon_b, &taxon_c, false);
-        
+
         assert_eq!(dist_b_to_c_before, 6.0);
         assert_eq!(dist_b_to_c_after, 25.0);
-
     }
 
+    #[test]
+    fn test_get_nearest_taxa() {
+        let mut tree = PDM::default();
+        let _ = tree.load_from_newick_path("tests/test.tree");
+        tree.compute_row_vec().unwrap();
 
+        assert_eq!(
+            tree.get_nearest_taxa(&Taxon("T1".to_string())),
+            vec![
+                &Taxon("T1".to_string()),
+                &Taxon("T3".to_string()),
+                &Taxon("T7".to_string()),
+                &Taxon("T6".to_string()),
+                &Taxon("T8".to_string()),
+                &Taxon("T2".to_string()),
+                &Taxon("T5".to_string()),
+                &Taxon("T9".to_string()),
+                &Taxon("T10".to_string()),
+                &Taxon("T4".to_string()),
+            ]
+        );
+
+        assert_eq!(
+            tree.get_nearest_taxa(&Taxon("T10".to_string())),
+            vec![
+                &Taxon("T10".to_string()),
+                &Taxon("T4".to_string()),
+                &Taxon("T9".to_string()),
+                &Taxon("T8".to_string()),
+                &Taxon("T2".to_string()),
+                &Taxon("T5".to_string()),
+                &Taxon("T6".to_string()),
+                &Taxon("T7".to_string()),
+                &Taxon("T3".to_string()),
+                &Taxon("T1".to_string()),
+            ]
+        );
+
+        assert_eq!(
+            tree.get_nearest_taxa(&Taxon("T2".to_string())),
+            vec![
+                &Taxon("T2".to_string()),
+                &Taxon("T8".to_string()),
+                &Taxon("T9".to_string()),
+                &Taxon("T10".to_string()),
+                &Taxon("T4".to_string()),
+                &Taxon("T5".to_string()),
+                &Taxon("T6".to_string()),
+                &Taxon("T7".to_string()),
+                &Taxon("T3".to_string()),
+                &Taxon("T1".to_string()),
+            ]
+        );
+
+        assert_eq!(
+            tree.get_nearest_taxa(&Taxon("T3".to_string())),
+            vec![
+                &Taxon("T3".to_string()),
+                &Taxon("T1".to_string()),
+                &Taxon("T7".to_string()),
+                &Taxon("T6".to_string()),
+                &Taxon("T8".to_string()),
+                &Taxon("T2".to_string()),
+                &Taxon("T5".to_string()),
+                &Taxon("T9".to_string()),
+                &Taxon("T10".to_string()),
+                &Taxon("T4".to_string()),
+            ]
+        );
+
+        assert_eq!(
+            tree.get_nearest_taxa(&Taxon("T4".to_string())),
+            vec![
+                &Taxon("T4".to_string()),
+                &Taxon("T10".to_string()),
+                &Taxon("T9".to_string()),
+                &Taxon("T8".to_string()),
+                &Taxon("T2".to_string()),
+                &Taxon("T5".to_string()),
+                &Taxon("T6".to_string()),
+                &Taxon("T7".to_string()),
+                &Taxon("T3".to_string()),
+                &Taxon("T1".to_string()),
+            ]
+        );
+
+        assert_eq!(
+            tree.get_nearest_taxa(&Taxon("T5".to_string())),
+            vec![
+                &Taxon("T5".to_string()),
+                &Taxon("T8".to_string()),
+                &Taxon("T2".to_string()),
+                &Taxon("T9".to_string()),
+                &Taxon("T6".to_string()),
+                &Taxon("T10".to_string()),
+                &Taxon("T4".to_string()),
+                &Taxon("T7".to_string()),
+                &Taxon("T3".to_string()),
+                &Taxon("T1".to_string()),
+            ]
+        );
+
+        assert_eq!(
+            tree.get_nearest_taxa(&Taxon("T6".to_string())),
+            vec![
+                &Taxon("T6".to_string()),
+                &Taxon("T8".to_string()),
+                &Taxon("T2".to_string()),
+                &Taxon("T5".to_string()),
+                &Taxon("T7".to_string()),
+                &Taxon("T9".to_string()),
+                &Taxon("T10".to_string()),
+                &Taxon("T3".to_string()),
+                &Taxon("T4".to_string()),
+                &Taxon("T1".to_string()),
+            ]
+        );
+
+        assert_eq!(
+            tree.get_nearest_taxa(&Taxon("T7".to_string())),
+            vec![
+                &Taxon("T7".to_string()),
+                &Taxon("T6".to_string()),
+                &Taxon("T3".to_string()),
+                &Taxon("T1".to_string()),
+                &Taxon("T8".to_string()),
+                &Taxon("T2".to_string()),
+                &Taxon("T5".to_string()),
+                &Taxon("T9".to_string()),
+                &Taxon("T10".to_string()),
+                &Taxon("T4".to_string()),
+            ]
+        );
+
+        assert_eq!(
+            tree.get_nearest_taxa(&Taxon("T8".to_string())),
+            vec![
+                &Taxon("T8".to_string()),
+                &Taxon("T2".to_string()),
+                &Taxon("T9".to_string()),
+                &Taxon("T10".to_string()),
+                &Taxon("T4".to_string()),
+                &Taxon("T5".to_string()),
+                &Taxon("T6".to_string()),
+                &Taxon("T7".to_string()),
+                &Taxon("T3".to_string()),
+                &Taxon("T1".to_string()),
+            ]
+        );
+
+        assert_eq!(
+            tree.get_nearest_taxa(&Taxon("T9".to_string())),
+            vec![
+                &Taxon("T9".to_string()),
+                &Taxon("T8".to_string()),
+                &Taxon("T2".to_string()),
+                &Taxon("T10".to_string()),
+                &Taxon("T4".to_string()),
+                &Taxon("T5".to_string()),
+                &Taxon("T6".to_string()),
+                &Taxon("T7".to_string()),
+                &Taxon("T3".to_string()),
+                &Taxon("T1".to_string()),
+            ]
+        );
+    }
 }

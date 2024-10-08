@@ -9,7 +9,7 @@ use ndarray::Array2;
 use crate::error::PhyloErr;
 use crate::tree::{Edge, NodeDepth, NodeId, Taxon};
 use crate::tree::Node;
-use crate::util::{create_row_vec_from_mat_dims, row_idx_from_mat_coords, row_vec_to_symmat};
+use crate::util::{argsort_vec, create_row_vec_from_mat_dims, row_idx_from_mat_coords, row_vec_to_arr_idx, row_vec_to_symmat};
 
 /// Create and manipulate the Phylogenetic Distance Matrix.
 ///
@@ -545,6 +545,38 @@ impl PDM {
         let row_idx = self.get_row_vec_idx_dist_between_leaf_idx(a_idx, b_idx);
         let dist = self.row_vec.as_ref().unwrap()[row_idx];
         return if norm { dist / self.length().0 } else { dist };
+    }
+
+    /// Return the nearest taxa to a given taxon by distance.
+    ///
+    /// # Arguments
+    /// * `taxon`: - The taxon to search from.
+    pub fn get_nearest_taxa(&self, taxon: &Taxon) -> Vec<&Taxon> {
+        assert!(
+            !self.row_vec.is_none(),
+            "The PDM has not been computed yet, call compute_row_vec() first."
+        );
+        
+        // Generate the row vector for the taxon of interest
+        let taxon_idx = self.get_taxon_node_idx(taxon);
+        let row_idx = self.get_row_vec_idx_from_leaf_idx(taxon_idx);
+        let row_vec = row_vec_to_arr_idx(row_idx, self.row_vec.as_ref().unwrap());
+        
+        // Sort the row vector and return the row vector index
+        let argsort_idx = argsort_vec(&row_vec);
+        
+        // Return the taxa corresponding to these indices
+        let mut out: Vec<&Taxon> = Vec::with_capacity(argsort_idx.len());
+        for idx in argsort_idx {
+            let node_id = self.row_idx_to_leaf_idx[idx];
+            let leaf = self.get_node(node_id);
+            if leaf.taxon.is_some() {
+                out.push(leaf.taxon.as_ref().unwrap());
+            } else {
+                panic!("Leaf node has no taxon! Please report this error.");
+            }
+        }
+        out
     }
 }
 

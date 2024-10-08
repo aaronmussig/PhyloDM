@@ -157,6 +157,35 @@ fn test_row_vec_to_symmat() {
     assert_eq!(array[[2, 2]], 5.0);
 }
 
+/// Convert a row vector into a given row from a symmetric distance matrix.
+///
+/// # Arguments
+///
+/// * `row_idx`: - The row index in the matrix to generate.
+/// * `row_vec`: - The row vector to convert.
+///
+/// ```
+/// use phylodm::util::row_vec_to_arr_idx;
+/// row_vec_to_arr_idx(0, &vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0]);
+/// ```
+#[must_use]
+pub fn row_vec_to_arr_idx(row_idx: usize, row_vec: &[f64]) -> Vec<f64> {
+    let num_leaf = mat_size_from_row_vec_size(row_vec.len());
+    let mut out = vec![0.0; num_leaf];
+    for i in 0..num_leaf {
+        out[i] = row_vec[row_idx_from_mat_coords(num_leaf, row_idx, i)];
+    }
+    out
+}
+
+#[test]
+fn test_row_vec_to_arr_idx() {
+    let row_vec = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
+    assert_eq!(row_vec_to_arr_idx(0, &row_vec), vec![0.0, 1.0, 2.0]);
+    assert_eq!(row_vec_to_arr_idx(1, &row_vec), vec![1.0, 3.0, 4.0]);
+    assert_eq!(row_vec_to_arr_idx(2, &row_vec), vec![2.0, 4.0, 5.0]);
+}
+
 /// Sort a vector of f64 values and return the indices that would sort the vector.
 /// No ordering is guaranteed for equal elements.
 ///
@@ -171,6 +200,7 @@ fn test_row_vec_to_symmat() {
 /// let indices = argsort_vec(&vec![1.0, 3.0, 2.0, 4.0]);
 /// assert_eq!(indices, vec![0, 2, 1, 3]);
 /// ```
+#[must_use]
 pub fn argsort_vec(vec: &[f64]) -> Vec<usize> {
     let mut indices: Vec<usize> = (0..vec.len()).collect();
     indices.sort_unstable_by(|&i, &j| {

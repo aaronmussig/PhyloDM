@@ -118,6 +118,17 @@ impl PhyloDM {
         let taxon_b = Taxon(b.to_string());
         self.tree.distance(&taxon_a, &taxon_b, norm)
     }
+    
+    pub fn get_nearest_taxa(&self, taxon: &str) -> Vec<String> {
+        let taxon = Taxon(taxon.to_string());
+        let result = self.tree.get_nearest_taxa(&taxon);
+        let mut out: Vec<String> = Vec::with_capacity(result.len());
+        for taxon in result {
+            out.push(taxon.0.clone());
+        }
+        out
+    }
+    
 }
 
 #[pymodule]
