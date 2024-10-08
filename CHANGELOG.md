@@ -1,3 +1,11 @@
+# [3.2.0](https://github.com/aaronmussig/PhyloDM/compare/v3.1.0...v3.2.0) (2024-10-08)
+
+
+### Features
+
+* **pdm:** Add get_nearest_taxa. ([e4ab08a](https://github.com/aaronmussig/PhyloDM/commit/e4ab08a112c07f61e058f4e781db6295af5f75dc))
+* **util:** Add argsort_vec. ([132b0c8](https://github.com/aaronmussig/PhyloDM/commit/132b0c842845bbe45fd7b660b9becd969fd2e060))
+
 # [3.1.0](https://github.com/aaronmussig/PhyloDM/compare/v3.0.0...v3.1.0) (2024-07-16)
 
 
